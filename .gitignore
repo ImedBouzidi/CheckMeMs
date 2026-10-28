@@ -1,0 +1,94 @@
+# Dependencies
+node_modules/
+*/node_modules/
+**/node_modules/
+
+# Logs
+*.log
+logs/
+.log/
+logs/*
+*.log.*
+
+# Build outputs
+target/
+*/target/
+**/target/
+build/
+*/build/
+**/build/
+dist/
+*/dist/
+**/dist/
+out/
+*/out/
+**/out/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+.gradle/
+gradle-app.setting
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.cache
+.cache/
+
+# Large binaries
+*.jar
+!**/src/**/lib/*.jar
+!**/libs/*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# PID files
+.pids/
+*.pid
+
+# Logs directory
+.logs/
+
+# Database
+*.db
+*.sqlite
+
+# Compiled class files
+*.class
+
+# Package files
+*.7z
+*.dmg
+*.iso
+*.apk
+
+# Generated files
+coverage/
+.nyc_output/
+keycloak-21.1.1/

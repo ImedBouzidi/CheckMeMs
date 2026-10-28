@@ -1,0 +1,73 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: user-profile-auth
+          uri: lb://user-profile-service
+          predicates:
+            - Path=/api/auth/**
+
+        - id: user-profile-service
+          uri: lb://user-profile-service
+          predicates:
+            - Path=/api/users/**
+
+        - id: game-service
+          uri: lb://games-service
+          predicates:
+            - Path=/api/games/**
+
+        - id: review-service
+          uri: lb://review-service
+          predicates:
+            - Path=/api/reviews/**
+
+        - id: analysis-service
+          uri: lb://analysis-service
+          predicates:
+            - Path=/api/analysis/**
+
+        - id: opening-service
+          uri: lb://opening-service
+          predicates:
+            - Path=/api/openings/**
+
+        - id: puzzle-service
+          uri: lb://puzzle-service
+          predicates:
+            - Path=/api/puzzles/**
+
+        - id: engine-bot-service
+          uri: lb://engine-bot-service
+          predicates:
+            - Path=/api/engine/**
+
+        - id: play-service
+          uri: lb://play-service
+          predicates:
+            - Path=/api/play/**
+
+        - id: matchmaking-service
+          uri: lb://matchmaking-service
+          predicates:
+            - Path=/api/matchmaking/**
+
+        - id: rating-service
+          uri: lb://rating-service
+          predicates:
+            - Path=/api/ratings/**
+
+        - id: learning-service
+          uri: lb://learning-service
+          predicates:
+            - Path=/api/learning/**
+
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**
+
+        - id: fairplay-moderation-service
+          uri: lb://fairplay-moderation-service
+          predicates:
+            - Path=/api/fairplay/**

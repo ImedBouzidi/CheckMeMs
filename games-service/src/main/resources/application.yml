@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: games-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  config:
+    import: optional:file:.env[.properties]
+  cloud:
+    compatibility-verifier:
+      enabled: false
+
+server:
+  port: ${SERVER_PORT:8094}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
