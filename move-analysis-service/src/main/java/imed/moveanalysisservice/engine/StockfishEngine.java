@@ -94,7 +94,11 @@ public class StockfishEngine {
         }
     }
 
-    public EngineScore analyzePosition(String fen, int depth) throws IOException {
+    /**
+     * One engine process serves every job, so searches are serialised; two concurrent positions
+     * would interleave on the same stdout queue and both readings would be wrong.
+     */
+    public synchronized EngineScore analyzePosition(String fen, int depth) throws IOException {
         outputQueue.clear();
         sendCommand("position fen " + fen);
         sendCommand("go depth " + depth);

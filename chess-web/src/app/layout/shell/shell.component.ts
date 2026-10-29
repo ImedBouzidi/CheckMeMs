@@ -88,6 +88,10 @@ import { ThemeService } from '../../core/services/theme.service';
         </button>
 
         <mat-menu #userMenu="matMenu" panelClass="account-menu-panel" xPosition="before">
+          <button mat-menu-item routerLink="/dashboard">
+            <mat-icon>dashboard</mat-icon>
+            <span>{{ language.t('nav.dashboard') }}</span>
+          </button>
           <button mat-menu-item routerLink="/play">
             <mat-icon>sports_esports</mat-icon>
             <span>{{ language.t('nav.playGame') }}</span>
@@ -131,6 +135,15 @@ import { ThemeService } from '../../core/services/theme.service';
                 (click)="closeIfMobile(sidenav)">
                 <mat-icon matListItemIcon>space_dashboard</mat-icon>
                 <span matListItemTitle>{{ language.t('nav.home') }}</span>
+              </a>
+              <a
+                mat-list-item
+                class="nav-link"
+                routerLink="/dashboard"
+                routerLinkActive="active"
+                (click)="closeIfMobile(sidenav)">
+                <mat-icon matListItemIcon>dashboard</mat-icon>
+                <span matListItemTitle>{{ language.t('nav.dashboard') }}</span>
               </a>
               <a
                 mat-list-item

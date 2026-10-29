@@ -1,0 +1,21 @@
+[Event "Live Chess"]
+[Site "Chess.com"]
+[Date "2026.10.24"]
+[Round "?"]
+[White "imed_Bennington"]
+[Black "ItsGoutam"]
+[Result "1-0"]
+[TimeControl "600"]
+[WhiteElo "785"]
+[BlackElo "766"]
+[Termination "imed_Bennington won by resignation"]
+[ECO "C21"]
+[EndTime "12:59:33 GMT+0000"]
+[Link "https://www.chess.com/game/live/185863610792?username=imed_bennington&move=0"]
+
+1. e4 e5 2. d4 exd4 3. Nf3 g6 4. Bc4 Bg7 5. Ng5 Nh6 6. c3 O-O 7. cxd4 d6 8. O-O
+c6 9. Nc3 b5 10. Bd3 Bg4 11. f3 Be6 12. e5 dxe5 13. dxe5 Qb6+ 14. Kh1 Nd7 15.
+Nce4 Nxe5 16. Nxe6 fxe6 17. Ng5 Rad8 18. Nxe6 Rxd3 19. Qe2 Rf5 20. Bf4 Qd4 21.
+Nxd4 Rxf4 22. Nb3 Rd8 23. Nc5 Rfd4 24. f4 Neg4 25. Ne6 Rd2 26. Qe4 Re8 27. Qxc6
+Nf2+ 28. Kg1 Rf8 29. Nxf8 Bxf8 30. Qe6+ Kg7 31. Qe3 Nhg4 32. Qxd2 Bc5 33. Qc3+
+Kh6 34. Qxc5 1-0

@@ -6,8 +6,12 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -37,14 +41,19 @@ public class AnalysisClient {
                     "metadata", game.getMetadata() != null ? game.getMetadata() : "{}"
             );
 
-            Map response = webClient.post()
+            String authorization = currentAuthorization();
+            WebClient.RequestBodySpec request = webClient.post()
                     .uri(submitPath)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(payload)
+                    .contentType(MediaType.APPLICATION_JSON);
+            if (authorization != null && !authorization.isBlank()) {
+                request = request.header(HttpHeaders.AUTHORIZATION, authorization);
+            }
+
+            Map response = request.bodyValue(payload)
                     .retrieve()
                     .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(), clientResponse -> {
-                        log.warn("Analysis service returned error status: {}", clientResponse.statusCode());
-                        return Mono.error(new RuntimeException("Analysis service error"));
+                        log.warn("Analysis service returned {} for game {}", clientResponse.statusCode(), game.getId());
+                        return Mono.error(new IllegalStateException("Analysis service returned " + clientResponse.statusCode()));
                     })
                     .bodyToMono(Map.class)
                     .block();
@@ -63,5 +72,17 @@ public class AnalysisClient {
             log.error("Failed to submit game to analysis service", e);
             throw e;
         }
+    }
+
+    /**
+     * analysis-service is a protected resource, so the caller's token has to travel with the
+     * service-to-service call; without it the submission is rejected as anonymous.
+     */
+    private String currentAuthorization() {
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        if (attributes instanceof ServletRequestAttributes servletAttributes) {
+            return servletAttributes.getRequest().getHeader(HttpHeaders.AUTHORIZATION);
+        }
+        return null;
     }
 }

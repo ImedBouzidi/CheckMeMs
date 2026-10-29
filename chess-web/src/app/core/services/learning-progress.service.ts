@@ -1,4 +1,5 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, effect, Injectable, inject, signal } from '@angular/core';
+import { StorageScopeService } from './storage-scope.service';
 
 interface ProgressState {
   completed: string[];
@@ -11,20 +12,6 @@ function lessonKey(courseId: string, lessonId: string): string {
   return `${courseId}/${lessonId}`;
 }
 
-function readState(): ProgressState {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { completed: [], lastOpened: null };
-    const parsed = JSON.parse(raw) as Partial<ProgressState>;
-    return {
-      completed: Array.isArray(parsed.completed) ? parsed.completed.filter((v): v is string => typeof v === 'string') : [],
-      lastOpened: typeof parsed.lastOpened === 'string' ? parsed.lastOpened : null
-    };
-  } catch {
-    return { completed: [], lastOpened: null };
-  }
-}
-
 /**
  * Lesson progress for Slice 1. The shape mirrors a future backend table
  * (`lesson_progress(user_id, lesson_id, completed_at)`); swap the storage
@@ -32,7 +19,16 @@ function readState(): ProgressState {
  */
 @Injectable({ providedIn: 'root' })
 export class LearningProgressService {
-  private readonly state = signal<ProgressState>(readState());
+  private readonly storage = inject(StorageScopeService);
+
+  private readonly state = signal<ProgressState>(this.readState());
+
+  constructor() {
+    effect(() => {
+      this.storage.scope();
+      this.state.set(this.readState());
+    });
+  }
 
   readonly completed = computed(() => new Set(this.state().completed));
   readonly lastOpened = computed(() => this.state().lastOpened);
@@ -63,10 +59,16 @@ export class LearningProgressService {
 
   private write(next: ProgressState): void {
     this.state.set(next);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // Ignore storage failures; the in-memory state still applies.
-    }
+    this.storage.write(STORAGE_KEY, next);
+  }
+
+  private readState(): ProgressState {
+    const parsed = this.storage.read<Partial<ProgressState>>(STORAGE_KEY);
+    if (!parsed) return { completed: [], lastOpened: null };
+
+    return {
+      completed: Array.isArray(parsed.completed) ? parsed.completed.filter((v): v is string => typeof v === 'string') : [],
+      lastOpened: typeof parsed.lastOpened === 'string' ? parsed.lastOpened : null
+    };
   }
 }

@@ -52,7 +52,7 @@ eureka:
 
 analysis:
   service:
-    url: ${ANALYSIS_SERVICE_URL:http://move-analysis-service:8082}
+    url: ${ANALYSIS_SERVICE_URL:lb://analysis-service}
 
 server:
   port: ${SERVER_PORT}

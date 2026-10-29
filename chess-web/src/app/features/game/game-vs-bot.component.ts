@@ -20,6 +20,8 @@ import { PromotionDialog, PROMOTION_DIALOG_RESULT_TYPE } from 'cm-chessboard/src
 import { Chess, Square } from 'chess.js';
 
 import { StockfishEngineService } from '../../core/services/stockfish-engine.service';
+import { MoveAnalysisApiService, AnalysisReport, AnalysisSummary } from '../../core/services/move-analysis-api.service';
+import { GameHistoryService } from '../../core/services/game-history.service';
 import { LanguageService } from '../../core/i18n/language.service';
 import { PlayVsBotDialogComponent, BotDialogResult } from '../play/play-vs-bot-dialog.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -254,9 +256,58 @@ export interface MoveRecord {
                         {{ gameOverResult === 'win' ? language.t('bot.victory') : gameOverResult === 'loss' ? language.t('bot.gameOver') : language.t('bot.drawGame') }}
                       </h2>
                       <p class="game-over-reason">{{ gameOverReason }}</p>
+
+                      <div class="postgame-analysis" *ngIf="analysisStatus !== 'off'" role="status">
+                        <ng-container [ngSwitch]="analysisStatus">
+                          <div *ngSwitchCase="'submitting'" class="postgame-progress">
+                            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                            <span>{{ language.t('bot.analysis.submitting') }}</span>
+                          </div>
+                          <div *ngSwitchCase="'running'" class="postgame-progress">
+                            <mat-progress-bar
+                              [mode]="analysisExpectedPlies > 0 ? 'determinate' : 'query'"
+                              [value]="analysisProgressPercent">
+                            </mat-progress-bar>
+                            <span>{{ language.t('bot.analysis.running') }}</span>
+                            <span class="postgame-progress-meta">
+                              <mat-icon>checklist</mat-icon>
+                              {{ analysisExpectedPlies > 0
+                                ? language.t('bot.analysis.graded', { done: analysisProgress, total: analysisExpectedPlies })
+                                : language.t('bot.analysis.gradedUnknown', { done: analysisProgress }) }}
+                              · {{ language.t('analysis.progress.elapsed') }} {{ formatElapsed(analysisElapsedSeconds) }}
+                            </span>
+                          </div>
+                          <div *ngSwitchCase="'completed'" class="postgame-result">
+                            <mat-icon color="primary">check_circle</mat-icon>
+                            <span>{{ language.t('bot.analysis.ready') }}</span>
+                            <span class="postgame-stats" *ngIf="analysisSummary">
+                              {{ language.t('analysis.avgLoss') }} {{ analysisSummary.averageCpLoss }}
+                              ·
+                              {{ language.t('analysis.depthLabel') }} {{ analysisSummary.depth }}
+                            </span>
+                          </div>
+                          <div *ngSwitchCase="'failed'" class="postgame-result">
+                            <mat-icon color="warn">cloud_off</mat-icon>
+                            <span>{{ analysisError }}</span>
+                          </div>
+                        </ng-container>
+                        <button
+                          mat-stroked-button
+                          color="primary"
+                          *ngIf="analysisStatus === 'failed'"
+                          type="button"
+                          (click)="beginAnalysis()">
+                          <mat-icon>refresh</mat-icon> {{ language.t('bot.analysis.retry') }}
+                        </button>
+                      </div>
+
                       <div class="game-over-actions">
                         <button mat-flat-button color="primary" (click)="newGame()">
                           <mat-icon>refresh</mat-icon> {{ language.t('bot.playAgain') }}
+                        </button>
+                        <button mat-stroked-button color="primary" *ngIf="analysisRequestId" (click)="openAnalysis()">
+                          <mat-icon>{{ analysisStatus === 'completed' ? 'monitor_graph' : 'visibility' }}</mat-icon>
+                          {{ language.t(analysisStatus === 'completed' ? 'bot.analysis.review' : 'bot.analysis.watch') }}
                         </button>
                         <button mat-stroked-button *ngIf="!kidsMode" (click)="openDifficultyDialog()">
                           <mat-icon>tune</mat-icon> {{ language.t('bot.changeStrength') }}
@@ -1738,6 +1789,19 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
   gameOverResult: 'win' | 'loss' | 'draw' | '' = '';
   gameOverReason = '';
 
+  analysisStatus: 'off' | 'submitting' | 'running' | 'completed' | 'failed' = 'off';
+  analysisRequestId: string | null = null;
+  /** Local history entry for the game currently being played or reviewed. */
+  private currentGameId: string | null = null;
+  analysisSummary: AnalysisSummary | null = null;
+  analysisError = '';
+  analysisProgress = 0;
+  analysisExpectedPlies = 0;
+  analysisElapsedSeconds = 0;
+  private analysisSubs: Subscription[] = [];
+  private analysisElapsedTimer?: ReturnType<typeof setInterval>;
+  private analysisStartedAt = 0;
+
   showEvalBar = true;
   autoShowArrows = false;
   hintActive = false;
@@ -1765,7 +1829,9 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
     private router: Router,
     private engine: StockfishEngineService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private analysisApi: MoveAnalysisApiService,
+    private history: GameHistoryService
   ) {}
 
   get currentThemeLabel(): string {
@@ -1794,6 +1860,8 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnDestroy() {
     this.subs.forEach(s => s.unsubscribe());
+    this.clearAnalysisSubscriptions();
+    this.stopAnalysisTimer();
     this.stopTimer();
     this.engine.stop();
     if (this.board) {
@@ -1917,6 +1985,7 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
       this.gameOverReason = this.language.t('bot.reason.botTimeUp');
     }
     this.playGameOverSound(this.gameOverResult === 'win');
+    this.beginAnalysis();
   }
 
   formatTime(ms: number): string {
@@ -2437,7 +2506,151 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     this.playGameOverSound(this.gameOverResult === 'win');
+    this.beginAnalysis();
     return true;
+  }
+
+  /* ------------------- Engine review (move-analysis-service) ------------------- */
+
+  /** The finished game is handed to the analysis service, then polled until the job settles. */
+  beginAnalysis(): void {
+    if (this.kidsMode || this.moveHistory.length < 2) return;
+
+    this.recordFinishedGame();
+    this.clearAnalysisSubscriptions();
+    this.analysisStatus = 'submitting';
+    this.analysisError = '';
+    this.analysisProgress = 0;
+    this.analysisExpectedPlies = this.moveHistory.length;
+    this.startAnalysisTimer();
+
+    const submission = this.analysisApi.submit(this.chess.pgn()).subscribe({
+      next: submitted => {
+        this.analysisRequestId = submitted.requestId;
+        this.history.attachAnalysis(this.currentGameId, submitted.requestId);
+        this.analysisStatus = 'running';
+        this.analysisSubs.push(this.analysisApi.watch(submitted.requestId).subscribe({
+          next: report => this.applyAnalysisReport(report),
+          error: error => this.failAnalysis(error)
+        }));
+      },
+      error: error => this.failAnalysis(error)
+    });
+    this.analysisSubs.push(submission);
+  }
+
+  private applyAnalysisReport(report: AnalysisReport): void {
+    this.analysisProgress = report.moveCount;
+
+    if (report.status === 'COMPLETED') {
+      this.analysisStatus = 'completed';
+      this.analysisSummary = report.summary;
+      this.stopAnalysisTimer();
+      this.updateHistoryAnalysisStatus('COMPLETED');
+    } else if (report.status === 'FAILED') {
+      this.analysisStatus = 'failed';
+      this.analysisError = this.language.t('bot.analysis.failed');
+      this.stopAnalysisTimer();
+      this.updateHistoryAnalysisStatus('FAILED');
+    } else {
+      this.analysisStatus = 'running';
+      this.updateHistoryAnalysisStatus('IN_PROGRESS');
+    }
+  }
+
+  private failAnalysis(error: any): void {
+    this.analysisStatus = 'failed';
+    this.stopAnalysisTimer();
+    this.updateHistoryAnalysisStatus('FAILED');
+    const status = error?.status;
+    this.analysisError = status === 401 || status === 403
+      ? this.language.t('bot.analysis.needSignIn')
+      : this.language.t('bot.analysis.failed');
+  }
+
+  /** Save the finished game once so the dashboard can list and re-open it. */
+  private recordFinishedGame(): void {
+    if (this.currentGameId) return;
+
+    const result = this.gameOverResult;
+    if (!result) return;
+
+    this.currentGameId = this.history.recordGame({
+      pgn: this.chess.pgn(),
+      result,
+      reason: this.gameOverReason,
+      playerColor: this.playerColor,
+      opponent: 'Stockfish',
+      skillLevel: this.skillLevel,
+      timeControl: this.timeControl,
+      plies: this.moveHistory.length
+    });
+  }
+
+  private updateHistoryAnalysisStatus(status: string): void {
+    if (this.currentGameId) {
+      this.history.updateAnalysisStatus(this.currentGameId, status);
+    }
+  }
+
+  get analysisProgressPercent(): number {
+    if (this.analysisExpectedPlies <= 0) return 0;
+    return Math.min(99, Math.round((this.analysisProgress / this.analysisExpectedPlies) * 100));
+  }
+
+  formatElapsed(totalSeconds: number): string {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  openAnalysis(): void {
+    if (!this.analysisRequestId) return;
+    this.router.navigate(['/analysis'], {
+      queryParams: {
+        requestId: this.analysisRequestId,
+        side: this.playerColor,
+        ...(this.analysisExpectedPlies > 0 ? { plies: this.analysisExpectedPlies } : {})
+      }
+    });
+  }
+
+  private startAnalysisTimer(): void {
+    this.stopAnalysisTimer();
+    this.analysisStartedAt = Date.now();
+    this.analysisElapsedSeconds = 0;
+    this.analysisElapsedTimer = setInterval(() => {
+      this.analysisElapsedSeconds = Math.floor((Date.now() - this.analysisStartedAt) / 1000);
+    }, 1000);
+  }
+
+  private stopAnalysisTimer(): void {
+    if (this.analysisElapsedTimer) {
+      clearInterval(this.analysisElapsedTimer);
+      this.analysisElapsedTimer = undefined;
+    }
+  }
+
+  private clearAnalysis(): void {
+    this.clearAnalysisSubscriptions();
+    this.stopAnalysisTimer();
+    this.analysisStatus = 'off';
+    this.analysisRequestId = null;
+    this.analysisSummary = null;
+    this.analysisError = '';
+    this.analysisProgress = 0;
+    this.analysisExpectedPlies = 0;
+    this.analysisElapsedSeconds = 0;
+  }
+
+  private clearAnalysisSubscriptions(): void {
+    this.analysisSubs.forEach(sub => sub.unsubscribe());
+    this.analysisSubs = [];
   }
 
   /* ------------------- Sound Synthesis & Audio ------------------- */
@@ -2620,6 +2833,7 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
     this.engine.stop();
     this.stopTimer();
     this.chess.reset();
+    this.currentGameId = null;
     this.moveHistory = [];
     this.pairedMoves = [];
     this.lastMove = null;
@@ -2629,6 +2843,7 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isGameOver = false;
     this.gameOverResult = '';
     this.gameOverReason = '';
+    this.clearAnalysis();
     this.botMoveInProgress = false;
     this.hintActive = false;
     this.evaluationDisplay = '0.00';
@@ -2677,6 +2892,7 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
       this.gameOverResult = 'loss';
       this.gameOverReason = this.language.t('bot.reason.resigned');
       this.playGameOverSound(false);
+      this.beginAnalysis();
     });
   }
 
