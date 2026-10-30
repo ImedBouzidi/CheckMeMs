@@ -1,5 +1,6 @@
 package imed.moveanalysisservice.dto.response;
 
+import imed.moveanalysisservice.model.MoveAnalysisStatus;
 import imed.moveanalysisservice.model.MoveClassification;
 
 public record MoveAnalysisResponse(
@@ -18,6 +19,15 @@ public record MoveAnalysisResponse(
         String bestMoveSan,
         Integer cpLoss,
         MoveClassification classification,
-        String pv
+        String pv,
+        Integer depth,
+        Integer seldepth,
+        Long nodes,
+        Long elapsedMs,
+        String engineVersion,
+        String configVersion,
+        Boolean preliminary,
+        MoveAnalysisStatus status,
+        String error
 ) {
 }

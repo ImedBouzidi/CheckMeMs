@@ -190,7 +190,10 @@ export class AuthService {
       this.startSession(tokens.access_token, tokens.refresh_token ?? refreshToken, tokens.expires_in, email);
       return true;
     } catch {
+      // The Keycloak session is gone (idle timeout or logout), so a retry can never succeed.
+      // Land on the login page instead of leaving the caller with a dead session.
       this.clearSession();
+      this.router.navigate(['/auth/login']);
       return false;
     }
   }

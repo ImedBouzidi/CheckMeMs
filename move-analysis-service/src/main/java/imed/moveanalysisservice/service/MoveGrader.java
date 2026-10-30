@@ -1,6 +1,6 @@
 package imed.moveanalysisservice.service;
 
-import imed.moveanalysisservice.engine.StockfishEngine.EngineScore;
+import imed.moveanalysisservice.engine.EngineEvaluation;
 import imed.moveanalysisservice.model.MoveClassification;
 
 /**
@@ -20,7 +20,7 @@ final class MoveGrader {
     private MoveGrader() {
     }
 
-    static Grade grade(boolean moverIsWhite, EngineScore before, EngineScore after) {
+    static Grade grade(boolean moverIsWhite, EngineEvaluation before, EngineEvaluation after) {
         int beforeWhite = whiteValue(before, moverIsWhite);
         int afterWhite = whiteValue(after, !moverIsWhite);
         boolean doomedBefore = isMateLoss(before, moverIsWhite);
@@ -44,34 +44,34 @@ final class MoveGrader {
         return cpLoss <= 100 ? MoveClassification.MISTAKE : MoveClassification.BLUNDER;
     }
 
-    private static int whiteValue(EngineScore score, boolean whiteToMove) {
+    private static int whiteValue(EngineEvaluation score, boolean whiteToMove) {
         if (score == null) {
             return 0;
         }
-        int value = score.mate == null
-                ? (score.cp == null ? 0 : score.cp)
-                : (score.mate > 0 ? MATE_VALUE - Math.abs(score.mate) : -(MATE_VALUE - Math.abs(score.mate)));
+        int value = score.mate() == null
+                ? (score.cp() == null ? 0 : score.cp())
+                : (score.mate() > 0 ? MATE_VALUE - Math.abs(score.mate()) : -(MATE_VALUE - Math.abs(score.mate())));
         return whiteToMove ? value : -value;
     }
 
-    static Integer whiteCp(EngineScore score, boolean whiteToMove) {
-        if (score == null || score.cp == null) {
+    static Integer whiteCp(EngineEvaluation score, boolean whiteToMove) {
+        if (score == null || score.cp() == null) {
             return null;
         }
-        return whiteToMove ? score.cp : -score.cp;
+        return whiteToMove ? score.cp() : -score.cp();
     }
 
-    static Integer whiteMate(EngineScore score, boolean whiteToMove) {
-        if (score == null || score.mate == null) {
+    static Integer whiteMate(EngineEvaluation score, boolean whiteToMove) {
+        if (score == null || score.mate() == null) {
             return null;
         }
-        return whiteToMove ? score.mate : -score.mate;
+        return whiteToMove ? score.mate() : -score.mate();
     }
 
-    private static boolean isMateLoss(EngineScore score, boolean whiteToMove) {
-        if (score == null || score.mate == null) {
+    private static boolean isMateLoss(EngineEvaluation score, boolean whiteToMove) {
+        if (score == null || score.mate() == null) {
             return false;
         }
-        return whiteToMove ? score.mate < 0 : score.mate > 0;
+        return whiteToMove ? score.mate() < 0 : score.mate() > 0;
     }
 }

@@ -2,7 +2,12 @@ package imed.moveanalysisservice.model;
 
 public enum AnalysisStatus {
     PENDING,
-    IN_PROGRESS,
+    PROCESSING,
+    PARTIAL,
     COMPLETED,
-    FAILED
+    FAILED;
+
+    public boolean isTerminal() {
+        return this == COMPLETED || this == FAILED;
+    }
 }

@@ -1,6 +1,7 @@
 package imed.gamesservice.service.client;
 
 import imed.gamesservice.model.Game;
+import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -24,6 +25,13 @@ public class AnalysisClient {
 
     @Value("${analysis.service.submit-path:/api/analysis/games}")
     private String submitPath;
+
+    /**
+     * Analysis must never hold up gameplay: a slow or unreachable service is abandoned after this
+     * budget and the game is still persisted with analysis marked as failed.
+     */
+    @Value("${analysis.service.timeout-ms:2000}")
+    private long timeoutMs;
 
     public AnalysisClient(WebClient analysisWebClient) {
         this.webClient = analysisWebClient;
@@ -56,7 +64,7 @@ public class AnalysisClient {
                         return Mono.error(new IllegalStateException("Analysis service returned " + clientResponse.statusCode()));
                     })
                     .bodyToMono(Map.class)
-                    .block();
+                    .block(Duration.ofMillis(timeoutMs));
 
             if (response != null && response.get("requestId") != null) {
                 return response.get("requestId").toString();

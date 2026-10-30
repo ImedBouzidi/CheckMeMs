@@ -1,11 +1,11 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, retry } from 'rxjs/operators';
 import { Chess } from 'chess.js';
 import { APP_CONFIG_TOKEN } from '../tokens/app-config.token';
 
-export type AnalysisJobStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+export type AnalysisJobStatus = 'PENDING' | 'PROCESSING' | 'PARTIAL' | 'COMPLETED' | 'FAILED';
 
 export type MoveGrade =
   | 'brilliant'
@@ -43,7 +43,7 @@ interface RawAnalysisResponse {
   status: AnalysisJobStatus;
   moveCount: number | null;
   moves: RawMoveAnalysis[] | null;
-  summary: string | null;
+  summary: string | Record<string, unknown> | null;
 }
 
 export interface ReviewedMove {
@@ -88,6 +88,25 @@ export interface AnalysisReport {
   summary: AnalysisSummary | null;
 }
 
+export interface LiveFinalizeResponse {
+  requestId: string;
+  gameId: string;
+  status: AnalysisJobStatus;
+  expectedPlies: number;
+  completedPlies: number;
+}
+
+export interface LiveMoveAnalysisRequest {
+  gameId: string;
+  ply: number;
+  moveNumber: number;
+  color: 'white' | 'black';
+  san: string;
+  uci: string;
+  fenBefore: string;
+  fenAfter: string;
+}
+
 const GRADES: MoveGrade[] = [
   'brilliant', 'great', 'good', 'inaccuracy', 'mistake', 'blunder', 'book', 'forced'
 ];
@@ -106,10 +125,29 @@ export class MoveAnalysisApiService {
   private readonly http = inject(HttpClient);
   private readonly config = inject(APP_CONFIG_TOKEN);
 
-  /** Hand a finished game to the engine service; the job answers with its request id. */
-  submit(pgn: string): Observable<{ requestId: string; status: AnalysisJobStatus }> {
+  /**
+   * Hand a finished game to the engine service; the job answers with its request id.
+   * `gameId` identifies the game for idempotency and must be a UUID.
+   */
+  submit(pgn: string, gameId: string): Observable<{ requestId: string; status: AnalysisJobStatus }> {
     const url = `${this.config.apiBaseUrl}/analysis/submit`;
-    return this.http.post<{ requestId: string; status: AnalysisJobStatus }>(url, { pgn });
+    return this.http.post<{ requestId: string; status: AnalysisJobStatus }>(url, { pgn, gameId });
+  }
+
+  submitLiveMove(request: LiveMoveAnalysisRequest): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(
+      `${this.config.apiBaseUrl}/analysis/live-moves`,
+      request
+    );
+  }
+
+  /** Tell the engine service that no more moves will stream in for this game. */
+  finalizeLive(gameId: string, expectedPlies: number,
+                pgn: string): Observable<LiveFinalizeResponse> {
+    return this.http.post<LiveFinalizeResponse>(
+      `${this.config.apiBaseUrl}/analysis/games/${gameId}/live-moves/finalize`,
+      { expectedPlies, pgn }
+    );
   }
 
   fetch(requestId: string): Observable<AnalysisReport> {
@@ -117,18 +155,41 @@ export class MoveAnalysisApiService {
     return this.http.get<RawAnalysisResponse>(url).pipe(map(raw => this.toReport(raw)));
   }
 
+  fetchByGameId(gameId: string): Observable<AnalysisReport> {
+    return this.http
+      .get<RawAnalysisResponse>(`${this.config.apiBaseUrl}/analysis/games/${gameId}`)
+      .pipe(
+        retry({ count: 10, delay: 500 }),
+        map(raw => this.toReport(raw))
+      );
+  }
+
   /**
    * Emits on every poll and completes once the job reaches a terminal status, so callers can
    * show live progress without wiring their own timer.
    */
   watch(requestId: string, intervalMs = 2000): Observable<AnalysisReport> {
+    return this.pollUntilTerminal(() => this.fetch(requestId), intervalMs);
+  }
+
+  /** Same as `watch`, but for a game that was analysed ply by ply while it was played. */
+  watchByGameId(gameId: string, intervalMs = 2000): Observable<AnalysisReport> {
+    return this.pollUntilTerminal(
+      () => this.http.get<RawAnalysisResponse>(`${this.config.apiBaseUrl}/analysis/games/${gameId}`)
+        .pipe(map(raw => this.toReport(raw))),
+      intervalMs
+    );
+  }
+
+  private pollUntilTerminal(read: () => Observable<AnalysisReport>,
+                             intervalMs: number): Observable<AnalysisReport> {
     return new Observable<AnalysisReport>(subscriber => {
       let cancelled = false;
       let timerId: ReturnType<typeof setTimeout> | undefined;
 
       const poll = () => {
         if (cancelled) return;
-        this.fetch(requestId).subscribe({
+        read().subscribe({
           next: report => {
             subscriber.next(report);
             if (isTerminal(report.status)) {
@@ -224,11 +285,13 @@ export class MoveAnalysisApiService {
     };
   }
 
-  private parseSummary(summary: string | null): AnalysisSummary | null {
+  private parseSummary(summary: string | Record<string, unknown> | null): AnalysisSummary | null {
     if (!summary) return null;
 
     try {
-      const parsed = JSON.parse(summary) as Partial<AnalysisSummary> & {
+      const parsed = (typeof summary === 'string'
+        ? JSON.parse(summary)
+        : summary) as Partial<AnalysisSummary> & {
         players?: Record<string, Partial<PlayerSummary>>;
       };
       const white: Partial<PlayerSummary> = parsed.players?.white ?? {};

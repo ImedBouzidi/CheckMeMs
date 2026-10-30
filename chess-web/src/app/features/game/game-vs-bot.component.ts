@@ -22,10 +22,11 @@ import { Chess, Square } from 'chess.js';
 import { StockfishEngineService } from '../../core/services/stockfish-engine.service';
 import { MoveAnalysisApiService, AnalysisReport, AnalysisSummary } from '../../core/services/move-analysis-api.service';
 import { GameHistoryService } from '../../core/services/game-history.service';
+import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/i18n/language.service';
 import { PlayVsBotDialogComponent, BotDialogResult } from '../play/play-vs-bot-dialog.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
-import { Subscription } from 'rxjs';
+import { catchError, Subscription, switchMap, throwError } from 'rxjs';
 
 export interface MoveRecord {
   number: number;
@@ -1775,6 +1776,7 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
   kingInCheckSquare: string | null = null;
   legalMovesList: any[] = [];
   botMoveInProgress = false;
+  private invalidBotMoveRetries = 0;
   private pendingMove: { from: string; to: string } | null = null;
 
   // ---- Chess Timer ----
@@ -1793,6 +1795,7 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
   analysisRequestId: string | null = null;
   /** Local history entry for the game currently being played or reviewed. */
   private currentGameId: string | null = null;
+  private liveAnalysisGameId = crypto.randomUUID();
   analysisSummary: AnalysisSummary | null = null;
   analysisError = '';
   analysisProgress = 0;
@@ -1831,7 +1834,8 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
     private analysisApi: MoveAnalysisApiService,
-    private history: GameHistoryService
+    private history: GameHistoryService,
+    private auth: AuthService
   ) {}
 
   get currentThemeLabel(): string {
@@ -2226,12 +2230,14 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
 
   executePlayerMove(from: string, to: string, promotion: string = 'q') {
     try {
+      const fenBefore = this.chess.fen();
       const isCapture = !!this.chess.get(to as Square);
       const move = this.chess.move({ from, to, promotion });
       if (move) {
         this.clearLegalMoves();
         this.applyIncrement('w' === move.color ? 'w' : 'b');
         this.onMoveExecuted(move.from, move.to, move.san, isCapture);
+        this.submitLiveMove(move, fenBefore, this.chess.fen());
 
         if (this.hintActive) {
           this.hintActive = false;
@@ -2246,6 +2252,22 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
       console.error('Player move error:', e);
       this.board.setPosition(this.chess.fen());
     }
+  }
+
+  private submitLiveMove(move: { color: 'w' | 'b'; san: string; from: string; to: string; promotion?: string },
+                          fenBefore: string, fenAfter: string): void {
+    if (!this.auth.isAuthenticated()) return;
+    const uci = `${move.from}${move.to}${move.promotion ?? ''}`;
+    this.analysisApi.submitLiveMove({
+      gameId: this.liveAnalysisGameId,
+      ply: this.moveHistory.length,
+      moveNumber: Math.ceil(this.moveHistory.length / 2),
+      color: move.color === 'w' ? 'white' : 'black',
+      san: move.san,
+      uci,
+      fenBefore,
+      fenAfter
+    }).subscribe({ error: error => console.warn('Live move analysis unavailable', error) });
   }
 
   /* ------------------- Engine Integration ------------------- */
@@ -2298,19 +2320,40 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
 
       this.subs.push(
         this.engine.bestMove.subscribe(bestMove => {
-          this.botMoveInProgress = false;
           if (!bestMove.move || bestMove.move === '') {
+            this.botMoveInProgress = false;
             return;
           }
           try {
             const from = bestMove.move.slice(0, 2);
             const to = bestMove.move.slice(2, 4);
             const promo = bestMove.move.length > 4 ? bestMove.move.charAt(4) : undefined;
+            const legalMove = this.chess.moves({ square: from as Square, verbose: true })
+              .find(move => move.to === to && (!promo || move.promotion === promo));
+
+            if (!legalMove) {
+              console.warn('Ignoring stale or illegal bot move:', bestMove.move);
+              this.engine.stop();
+              if (this.invalidBotMoveRetries < 2 && !this.isGameOver) {
+                this.invalidBotMoveRetries++;
+                this.engine.setPosition(this.chess.fen());
+                setTimeout(() => this.makeBotMove(), 100);
+              } else {
+                this.botMoveInProgress = false;
+                this.invalidBotMoveRetries = 0;
+              }
+              return;
+            }
+
+            this.invalidBotMoveRetries = 0;
+            this.botMoveInProgress = false;
             const isCapture = !!this.chess.get(to as Square);
 
+            const fenBefore = this.chess.fen();
             const move = this.chess.move({ from, to, promotion: promo });
             if (move) {
               this.onMoveExecuted(move.from, move.to, move.san, isCapture);
+              this.submitLiveMove(move, fenBefore, this.chess.fen());
               this.checkGameOver();
             }
           } catch (e) {
@@ -2512,7 +2555,10 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /* ------------------- Engine review (move-analysis-service) ------------------- */
 
-  /** The finished game is handed to the analysis service, then polled until the job settles. */
+  /**
+   * Close the live stream and follow the job until the engine has searched every ply. Moves were
+   * already queued one by one, so this only finalizes the review instead of resubmitting the game.
+   */
   beginAnalysis(): void {
     if (this.kidsMode || this.moveHistory.length < 2) return;
 
@@ -2524,19 +2570,30 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
     this.analysisExpectedPlies = this.moveHistory.length;
     this.startAnalysisTimer();
 
-    const submission = this.analysisApi.submit(this.chess.pgn()).subscribe({
-      next: submitted => {
-        this.analysisRequestId = submitted.requestId;
-        this.history.attachAnalysis(this.currentGameId, submitted.requestId);
-        this.analysisStatus = 'running';
-        this.analysisSubs.push(this.analysisApi.watch(submitted.requestId).subscribe({
-          next: report => this.applyAnalysisReport(report),
-          error: error => this.failAnalysis(error)
-        }));
-      },
-      error: error => this.failAnalysis(error)
-    });
-    this.analysisSubs.push(submission);
+    const pgn = this.chess.pgn();
+    const subscription = this.analysisApi
+      .finalizeLive(this.liveAnalysisGameId, this.moveHistory.length, pgn)
+      .pipe(
+        switchMap(() => this.analysisApi.watchByGameId(this.liveAnalysisGameId)),
+        catchError(error => {
+          // No live job to close, for example a game played while signed out: analyse the PGN.
+          if (error?.status === 404) {
+            return this.analysisApi.submit(pgn, this.liveAnalysisGameId)
+              .pipe(switchMap(submitted => this.analysisApi.watch(submitted.requestId)));
+          }
+          return throwError(() => error);
+        })
+      )
+      .subscribe({
+        next: report => {
+          this.analysisRequestId = report.requestId;
+          this.analysisExpectedPlies = Math.max(this.analysisExpectedPlies, report.moveCount);
+          this.history.attachAnalysis(this.currentGameId, report.requestId);
+          this.applyAnalysisReport(report);
+        },
+        error: error => this.failAnalysis(error)
+      });
+    this.analysisSubs.push(subscription);
   }
 
   private applyAnalysisReport(report: AnalysisReport): void {
@@ -2834,6 +2891,7 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
     this.stopTimer();
     this.chess.reset();
     this.currentGameId = null;
+    this.liveAnalysisGameId = crypto.randomUUID();
     this.moveHistory = [];
     this.pairedMoves = [];
     this.lastMove = null;
@@ -2851,6 +2909,7 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
     this.bestLineUci = [];
     this.bestLineSan = [];
     this.bestMoveStr = '';
+    this.invalidBotMoveRetries = 0;
     this.initTimers();
 
     if (this.board) {

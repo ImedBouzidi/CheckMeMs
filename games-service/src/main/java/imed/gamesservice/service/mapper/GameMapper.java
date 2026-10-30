@@ -1,5 +1,8 @@
 package imed.gamesservice.service.mapper;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import imed.gamesservice.dto.request.CreateGameRequest;
 import imed.gamesservice.dto.response.GameResponse;
 import imed.gamesservice.model.AnalysisStatus;
@@ -8,6 +11,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class GameMapper {
+
+    private final ObjectMapper objectMapper;
+
+    public GameMapper(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     public Game toEntity(CreateGameRequest request, String ownerId) {
         Game game = new Game();
@@ -19,8 +28,8 @@ public class GameMapper {
         game.setResult(request.result());
         game.setStatus(request.status());
         game.setMode(request.mode());
-        game.setTimeControl(request.timeControl());
-        game.setMetadata(request.metadata());
+        game.setTimeControl(toJson(request.timeControl()));
+        game.setMetadata(toJson(request.metadata()));
         if (request.submitForAnalysis() != null && request.submitForAnalysis()) {
             game.setSubmittedForAnalysis(Boolean.TRUE);
             game.setAnalysisStatus(AnalysisStatus.PENDING);
@@ -42,8 +51,8 @@ public class GameMapper {
                 game.getResult(),
                 game.getStatus(),
                 game.getMode(),
-                game.getTimeControl(),
-                game.getMetadata(),
+                fromJson(game.getTimeControl()),
+                fromJson(game.getMetadata()),
                 game.getSubmittedForAnalysis(),
                 game.getAnalysisStatus(),
                 game.getAnalysisRequestId(),
@@ -52,5 +61,33 @@ public class GameMapper {
                 game.getCreatedAt(),
                 game.getUpdatedAt()
         );
+    }
+
+    private String toJson(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            objectMapper.readTree(value);
+            return value;
+        } catch (JsonProcessingException exception) {
+            try {
+                return objectMapper.writeValueAsString(value);
+            } catch (JsonProcessingException serializationException) {
+                throw new IllegalArgumentException("Invalid JSON field", serializationException);
+            }
+        }
+    }
+
+    private String fromJson(String value) {
+        if (value == null || value.isBlank()) {
+            return value;
+        }
+        try {
+            JsonNode node = objectMapper.readTree(value);
+            return node.isTextual() ? node.textValue() : value;
+        } catch (JsonProcessingException exception) {
+            return value;
+        }
     }
 }

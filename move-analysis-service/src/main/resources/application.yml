@@ -6,6 +6,8 @@ spring:
   cloud:
     compatibility-verifier:
       enabled: false
+  jpa:
+    open-in-view: false
 
 management:
   endpoints:
@@ -15,10 +17,12 @@ management:
   endpoint:
     health:
       show-details: always
-
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${APP_NAME:analysis-service}
 
 server:
   port: ${SERVER_PORT:8082}
+  shutdown: graceful

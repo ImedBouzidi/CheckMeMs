@@ -1,0 +1,51 @@
+spring:
+  datasource:
+    url: ${TEST_DB_URL:jdbc:postgresql://localhost:55432/chess_analysis}
+    username: ${TEST_DB_USER:imed}
+    password: ${TEST_DB_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+
+  kafka:
+    listener:
+      auto-startup: false
+    consumer:
+      auto-offset-reset: earliest
+      group-id: move-analysis-live-test
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.data.redis.autoconfigure.RedisAutoConfiguration
+
+eureka:
+  client:
+    enabled: false
+
+stockfish:
+  path: ${STOCKFISH_PATH:../stockfish/stockfish-linux-x86-64-universal}
+  depth: 8
+  pool-size: 1
+  threads: 1
+  hash: 16
+  search-timeout-ms: 10000
+
+analysis:
+  live:
+    consumer-enabled: false
+    finalize-wait-ms: 0
+    finalize-poll-ms: 10
+  worker:
+    enabled: false
+    concurrency: 1
+    poll-interval-ms: 60000

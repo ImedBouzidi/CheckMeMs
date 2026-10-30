@@ -92,3 +92,8 @@ gradle-app.setting
 coverage/
 .nyc_output/
 keycloak-21.1.1/
+
+# Local Kafka distribution and KRaft state
+kafka_2.13-4.4.0/
+kafka_2.13-4.4.0.tgz
+.kafka-cluster-id

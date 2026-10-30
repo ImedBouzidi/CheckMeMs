@@ -6,7 +6,9 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -17,8 +19,8 @@ public class MoveAnalysis {
     @Id
     private UUID id;
 
-    @Column(name = "analysis_request_id")
-    private UUID analysisRequestId;
+    @Column(name = "game_analysis_id", nullable = false)
+    private UUID gameAnalysisId;
 
     @Column(name = "game_id")
     private UUID gameId;
@@ -26,12 +28,16 @@ public class MoveAnalysis {
     @Column(name = "move_number")
     private Integer moveNumber;
 
+    @Column(nullable = false)
     private Integer ply;
 
+    @Column(length = 16)
     private String color;
 
+    @Column(length = 32)
     private String san;
 
+    @Column(length = 16)
     private String uci;
 
     @Column(name = "fen_before", columnDefinition = "TEXT")
@@ -52,10 +58,10 @@ public class MoveAnalysis {
     @Column(name = "eval_after_mate")
     private Integer evalAfterMate;
 
-    @Column(name = "best_move_uci")
+    @Column(name = "best_move_uci", length = 16)
     private String bestMoveUci;
 
-    @Column(name = "best_move_san")
+    @Column(name = "best_move_san", length = 32)
     private String bestMoveSan;
 
     @Column(name = "best_move_eval_cp")
@@ -70,14 +76,52 @@ public class MoveAnalysis {
     @Column(name = "cp_loss")
     private Integer cpLoss;
 
+    @Column(name = "win_prob_loss")
+    private Double winProbLoss;
+
     @Enumerated(EnumType.STRING)
+    @Column(length = 32)
     private MoveClassification classification;
 
     @Column(columnDefinition = "TEXT")
     private String pv;
 
+    private Integer depth;
+
+    private Integer seldepth;
+
+    private Integer multipv;
+
+    private Long nodes;
+
+    @Column(name = "elapsed_ms")
+    private Long elapsedMs;
+
+    @Column(name = "engine_version")
+    private String engineVersion;
+
+    @Column(name = "config_version")
+    private String configVersion;
+
+    @Column(name = "is_preliminary", nullable = false)
+    private Boolean isPreliminary = Boolean.TRUE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private MoveAnalysisStatus status;
+
+    @Column(columnDefinition = "TEXT")
+    private String error;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
+
+    @Version
+    @Column(nullable = false)
+    private long version;
 
     public MoveAnalysis() {
     }
@@ -90,6 +134,20 @@ public class MoveAnalysis {
         if (createdAt == null) {
             createdAt = OffsetDateTime.now();
         }
+        if (updatedAt == null) {
+            updatedAt = createdAt;
+        }
+        if (isPreliminary == null) {
+            isPreliminary = Boolean.TRUE;
+        }
+        if (status == null) {
+            status = MoveAnalysisStatus.PENDING;
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = OffsetDateTime.now();
     }
 
     public UUID getId() {
@@ -100,12 +158,12 @@ public class MoveAnalysis {
         this.id = id;
     }
 
-    public UUID getAnalysisRequestId() {
-        return analysisRequestId;
+    public UUID getGameAnalysisId() {
+        return gameAnalysisId;
     }
 
-    public void setAnalysisRequestId(UUID analysisRequestId) {
-        this.analysisRequestId = analysisRequestId;
+    public void setGameAnalysisId(UUID gameAnalysisId) {
+        this.gameAnalysisId = gameAnalysisId;
     }
 
     public UUID getGameId() {
@@ -252,6 +310,14 @@ public class MoveAnalysis {
         this.cpLoss = cpLoss;
     }
 
+    public Double getWinProbLoss() {
+        return winProbLoss;
+    }
+
+    public void setWinProbLoss(Double winProbLoss) {
+        this.winProbLoss = winProbLoss;
+    }
+
     public MoveClassification getClassification() {
         return classification;
     }
@@ -268,11 +334,107 @@ public class MoveAnalysis {
         this.pv = pv;
     }
 
+    public Integer getDepth() {
+        return depth;
+    }
+
+    public void setDepth(Integer depth) {
+        this.depth = depth;
+    }
+
+    public Integer getSeldepth() {
+        return seldepth;
+    }
+
+    public void setSeldepth(Integer seldepth) {
+        this.seldepth = seldepth;
+    }
+
+    public Integer getMultipv() {
+        return multipv;
+    }
+
+    public void setMultipv(Integer multipv) {
+        this.multipv = multipv;
+    }
+
+    public Long getNodes() {
+        return nodes;
+    }
+
+    public void setNodes(Long nodes) {
+        this.nodes = nodes;
+    }
+
+    public Long getElapsedMs() {
+        return elapsedMs;
+    }
+
+    public void setElapsedMs(Long elapsedMs) {
+        this.elapsedMs = elapsedMs;
+    }
+
+    public String getEngineVersion() {
+        return engineVersion;
+    }
+
+    public void setEngineVersion(String engineVersion) {
+        this.engineVersion = engineVersion;
+    }
+
+    public String getConfigVersion() {
+        return configVersion;
+    }
+
+    public void setConfigVersion(String configVersion) {
+        this.configVersion = configVersion;
+    }
+
+    public Boolean getIsPreliminary() {
+        return isPreliminary;
+    }
+
+    public void setIsPreliminary(Boolean isPreliminary) {
+        this.isPreliminary = isPreliminary;
+    }
+
+    public MoveAnalysisStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(MoveAnalysisStatus status) {
+        this.status = status;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
+    }
+
     public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
 
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public OffsetDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(OffsetDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public long getVersion() {
+        return version;
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
     }
 }

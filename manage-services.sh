@@ -3,7 +3,7 @@
 #
 #   ./manage-services.sh                      interactive menu
 #   ./manage-services.sh status               one-shot table
-#   ./manage-services.sh start all            or: start games-service learning-service
+#   ./manage-services.sh start all            or: start games-service broker
 #   ./manage-services.sh stop eureka-server
 #   ./manage-services.sh restart api-gateway
 #   ./manage-services.sh logs games-service -f
@@ -54,6 +54,8 @@ fi
 
 START_TIMEOUT="${START_TIMEOUT:-180}"   # seconds to wait for a service port
 STOP_GRACE="${STOP_GRACE:-8}"          # seconds before SIGKILL
+KAFKA_HOME="${KAFKA_HOME:-$ROOT_DIR/kafka_2.13-4.4.0}"
+KAFKA_CONFIG="${KAFKA_CONFIG:-$KAFKA_HOME/config/server.properties}"
 
 if [[ -t 1 && -z "$NO_COLOR" && "${TERM:-dumb}" != "dumb" ]]; then
   RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'
@@ -64,10 +66,12 @@ fi
 
 # Ports that cannot be read from a config file (the gateway sits on 8081 because Keycloak owns 8080).
 declare -A KNOWN_PORTS=(
+  [broker]=9092
   [eureka-server]=8761
   [api-gateway]=8081
+  [kafka-service]=8088
   [user-profile-service]=8084
-  [games-service]=8094
+  [games-service]=8083
   [move-analysis-service]=8082
   [learning-service]=8091
   [chess-web]=4200
@@ -95,6 +99,7 @@ read_config_port() {
 
 kind_of_dir() {
   local d="$1"
+  [[ "$(basename "$d")" == broker ]] && { echo broker; return; }
   [[ -f "$d/pom.xml" || -f "$d/build.gradle" || -f "$d/build.gradle.kts" ]] && { echo spring; return; }
   [[ -f "$d/package.json" ]] && grep -q '"ng ' "$d/package.json" && { echo npm; return; }
   echo ""
@@ -111,16 +116,20 @@ discover_services() {
   local candidates=() d name k port
   for d in "$ROOT_DIR"/*/; do
     name="$(basename "$d")"
-    [[ "$name" == "eureka-server" || "$name" == "api-gateway" ]] && continue
+    [[ "$name" == "eureka-server" || "$name" == "api-gateway" || "$name" == "kafka-service" || "$name" == "broker" ]] && continue
     k="$(kind_of_dir "$d")"
     [[ -n "$k" ]] && candidates+=("$name")
   done
   mapfile -t candidates < <(printf '%s\n' "${candidates[@]}" | sort)
 
-  local order=("eureka-server" "api-gateway" ${candidates:+"${candidates[@]}"})
+  local order=("eureka-server" "broker" "kafka-service" "api-gateway" ${candidates:+"${candidates[@]}"})
   for name in "${order[@]}"; do
-    [[ -d "$ROOT_DIR/$name" ]] || continue
-    k="$(kind_of_dir "$ROOT_DIR/$name")"
+    if [[ "$name" == broker ]]; then
+      k=broker
+    else
+      [[ -d "$ROOT_DIR/$name" ]] || continue
+      k="$(kind_of_dir "$ROOT_DIR/$name")"
+    fi
     # .env wins: it is what Spring binds at runtime, so the manager must watch that port.
     port="$(env_server_port "$ROOT_DIR/$name")"
     [[ -z "$port" ]] && port="${KNOWN_PORTS[$name]:-}"
@@ -236,9 +245,11 @@ start_service() {
     echo -e "${DIM}   Free it with the 'Free a port' menu item, or restart the service to take it over.${NC}"
     return 1
   fi
-  local dir="$ROOT_DIR/$svc"
-  [[ -d "$dir" ]] || { echo -e "${RED}[$svc] No such directory: $dir${NC}"; return 1; }
   kind="$(kind_of "$svc")"
+  local dir="$ROOT_DIR/$svc"
+  if [[ "$kind" != broker ]]; then
+    [[ -d "$dir" ]] || { echo -e "${RED}[$svc] No such directory: $dir${NC}"; return 1; }
+  fi
 
   if [[ "$kind" == spring && -z "$RESOLVED_JDK" ]]; then
     echo -e "${RED}[$svc] No JDK $REQUIRED_JAVA_MAJOR with a javac found.${NC}"
@@ -247,23 +258,58 @@ start_service() {
     return 1
   fi
 
-  (( quiet )) || echo -e "${BLUE}[$svc] Starting ($([[ "$kind" == npm ]] && echo "npm start" || echo "spring-boot:run, profile=local, $(java_label)"))...${NC}"
+  local start_description
+  if [[ "$kind" == broker ]]; then
+    start_description="Kafka broker"
+  elif [[ "$kind" == npm ]]; then
+    start_description="npm start"
+  else
+    start_description="spring-boot:run, profile=local, $(java_label)"
+  fi
+  (( quiet )) || echo -e "${BLUE}[$svc] Starting ($start_description)...${NC}"
 
-  (
-    cd "$dir" || exit 1
-    [[ -f .env ]] && { set -a; . ./.env; set +a; }
-    if [[ "$kind" == npm ]]; then
-      export BROWSER=none
-      setsid nohup npm start > "$(log_file "$svc")" 2>&1 &
-    else
-      export SPRING_PROFILES_ACTIVE=local
-      local runner="mvn"
-      [[ -f mvnw ]] && { chmod +x mvnw 2>/dev/null; runner="./mvnw"; }
-      # setsid gives the build its own process group, so mvn and the JVM it forks die together.
-      setsid nohup "$runner" spring-boot:run -Dspring-boot.run.profiles=local > "$(log_file "$svc")" 2>&1 &
+  if [[ "$kind" == broker ]]; then
+    [[ -x "$KAFKA_HOME/bin/kafka-server-start.sh" && -f "$KAFKA_CONFIG" ]] || {
+      echo -e "${RED}[$svc] Kafka installation/config not found: $KAFKA_CONFIG${NC}"
+      echo -e "${DIM}   Set KAFKA_HOME or extract kafka_2.13-4.4.0.tgz first.${NC}"
+      return 1
+    }
+    if [[ ! -x "$KAFKA_HOME/bin/kafka-storage.sh" ]]; then
+      echo -e "${RED}[$svc] Kafka storage tool not found in $KAFKA_HOME/bin${NC}"
+      return 1
     fi
+    local cluster_id_file="$ROOT_DIR/.kafka-cluster-id" cluster_id
+    if [[ ! -f "$cluster_id_file" ]]; then
+      cluster_id="$("$KAFKA_HOME/bin/kafka-storage.sh" random-uuid)" || {
+        echo -e "${RED}[$svc] Could not generate a Kafka cluster ID${NC}"
+        return 1
+      }
+      printf '%s\n' "$cluster_id" > "$cluster_id_file"
+    fi
+    cluster_id="$(head -1 "$cluster_id_file")"
+    "$KAFKA_HOME/bin/kafka-storage.sh" format --ignore-formatted -t "$cluster_id" -c "$KAFKA_CONFIG" >/dev/null || {
+      echo -e "${RED}[$svc] Could not format Kafka storage${NC}"
+      return 1
+    }
+    setsid nohup "$KAFKA_HOME/bin/kafka-server-start.sh" "$KAFKA_CONFIG" > "$(log_file "$svc")" 2>&1 &
     echo $! > "$PID_DIR/$svc.pid"
-  )
+  else
+    (
+      cd "$dir" || exit 1
+      [[ -f .env ]] && { set -a; . ./.env; set +a; }
+      if [[ "$kind" == npm ]]; then
+        export BROWSER=none
+        setsid nohup npm start > "$(log_file "$svc")" 2>&1 &
+      else
+        export SPRING_PROFILES_ACTIVE=local
+        local runner="mvn"
+        [[ -f mvnw ]] && { chmod +x mvnw 2>/dev/null; runner="./mvnw"; }
+        # setsid gives the build its own process group, so mvn and the JVM it forks die together.
+        setsid nohup "$runner" spring-boot:run -Dspring-boot.run.profiles=local > "$(log_file "$svc")" 2>&1 &
+      fi
+      echo $! > "$PID_DIR/$svc.pid"
+    )
+  fi
 
   pid="$(get_pid "$svc")" || pid=""
   [[ -z "$pid" ]] && { echo -e "${RED}[$svc] Could not launch the process${NC}"; log_hint "$svc"; return 1; }

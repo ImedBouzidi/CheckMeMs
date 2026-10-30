@@ -22,6 +22,9 @@ import {
   PuzzleTrack
 } from '../../core/services/puzzle-progress.service';
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 interface CourseCard {
   course: Course;
   total: number;
@@ -1157,7 +1160,7 @@ export class DashboardComponent implements OnInit {
     if (!game.pgn || this.analyzingIds.has(game.id)) return;
 
     this.analyzingIds.add(game.id);
-    this.analysisApi.submit(game.pgn).subscribe({
+    this.analysisApi.submit(game.pgn, this.analysisGameId(game)).subscribe({
       next: submitted => {
         this.analyzingIds.delete(game.id);
         this.history.attachAnalysis(game.id, submitted.requestId);
@@ -1177,6 +1180,16 @@ export class DashboardComponent implements OnInit {
         );
       }
     });
+  }
+
+  /**
+   * The analysis service keys jobs by a UUID game id. Remote games already have one; local
+   * games use the history UUID unless the browser fell back to a non-UUID id.
+   */
+  private analysisGameId(game: GameHistoryEntry): string {
+    if (game.remoteId) return game.remoteId;
+    if (UUID_PATTERN.test(game.id)) return game.id;
+    return crypto.randomUUID();
   }
 
   openReview(game: GameHistoryEntry): void {

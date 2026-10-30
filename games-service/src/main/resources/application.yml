@@ -10,7 +10,7 @@ spring:
       enabled: false
 
 server:
-  port: ${SERVER_PORT:8094}
+  port: ${SERVER_PORT:8083}
 
 management:
   endpoints:

@@ -29,6 +29,11 @@ spring:
           predicates:
             - Path=/api/analysis/**
 
+        - id: kafka-service
+          uri: lb://kafka-service
+          predicates:
+            - Path=/api/kafka/**
+
         - id: learning-service
           uri: lb://learning-service
           predicates:

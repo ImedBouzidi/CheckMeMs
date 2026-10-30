@@ -54,6 +54,7 @@ eureka:
 analysis:
   service:
     url: ${ANALYSIS_SERVICE_URL:lb://analysis-service}
+    timeout-ms: ${ANALYSIS_SERVICE_TIMEOUT_MS:2000}
 
 logging:
   level:

@@ -2,7 +2,7 @@ package imed.moveanalysisservice.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import imed.moveanalysisservice.engine.StockfishEngine.EngineScore;
+import imed.moveanalysisservice.engine.EngineEvaluation;
 import imed.moveanalysisservice.model.MoveClassification;
 import org.junit.jupiter.api.Test;
 
@@ -61,15 +61,13 @@ class MoveGraderTest {
         assertThat(grade.classification()).isEqualTo(MoveClassification.BLUNDER);
     }
 
-    private static EngineScore cp(int sideToMoveCp) {
-        EngineScore score = new EngineScore();
-        score.cp = sideToMoveCp;
-        return score;
+    private static EngineEvaluation cp(int sideToMoveCp) {
+        return new EngineEvaluation(sideToMoveCp, null, null, null, 0, null, 0, 0, 1,
+                "Stockfish", "test", false);
     }
 
-    private static EngineScore mate(int sideToMoveMate) {
-        EngineScore score = new EngineScore();
-        score.mate = sideToMoveMate;
-        return score;
+    private static EngineEvaluation mate(int sideToMoveMate) {
+        return new EngineEvaluation(null, sideToMoveMate, null, null, 0, null, 0, 0, 1,
+                "Stockfish", "test", false);
     }
 }
