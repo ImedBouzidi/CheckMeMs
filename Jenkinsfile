@@ -127,11 +127,6 @@ pipeline {
                         }
                     }
                 }
-                post {
-                    always {
-                        sh 'docker compose stop postgres redis rabbitmq kafka eureka-server keycloak || true'
-                    }
-                }
             }
         }
 
@@ -180,6 +175,7 @@ pipeline {
 
     post {
         always {
+            sh 'docker compose stop postgres redis rabbitmq kafka eureka-server keycloak || true'
             sh 'docker compose ps || true'
         }
         failure {
