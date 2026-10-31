@@ -20,7 +20,7 @@ pipeline {
     }
 
     environment {
-        // BuildKit makes compose builds faster and keeps mvn/npm caches good.
+        // BuildKit makes compose builds faster and keeps the Maven cache warm.
         COMPOSE_DOCKER_CLI_BUILD = '1'
         DOCKER_BUILDKIT = '1'
         JAVA_SERVICE_NAMES = 'eureka-server api-gateway games-service user-profile-service learning-service move-analysis-service kafka-service'
@@ -79,7 +79,10 @@ pipeline {
                     agent {
                         docker {
                             image 'node:20-alpine'
-                            args '-v npm-cache:/root/.npm'
+                            // Jenkins may run this container with HOME=/var/empty.
+                            // Keep npm's cache in a writable container-local path
+                            // instead of relying on the image's root-home path.
+                            args '-e npm_config_cache=/tmp/npm-cache'
                         }
                     }
                     steps {
