@@ -18,7 +18,8 @@ import {
   MoveGrade,
   MoveAnalysisApiService,
   PlayerSummary,
-  ReviewedMove
+  ReviewedMove,
+  playerOpening as resolvePlayerOpening
 } from '../../core/services/move-analysis-api.service';
 
 type ReviewState = 'loading' | 'running' | 'ready' | 'failed';
@@ -322,6 +323,15 @@ const GRADE_ORDER: MoveGrade[] = ['brilliant', 'great', 'good', 'inaccuracy', 'm
                   r="1.8">
                 </circle>
               </svg>
+            </div>
+
+            <div class="opening-chip" *ngIf="playerOpening(report.opening, playerSide) as info"
+                 [matTooltip]="info.name">
+              <mat-icon>menu_book</mat-icon>
+              <span class="opening-kind"
+                    [class.opening-kind--defense]="info.kind === 'defense'">{{ language.t(info.labelKey) }}</span>
+              <span class="opening-eco">{{ info.eco }}</span>
+              <span class="opening-name">{{ info.name }}</span>
             </div>
 
             <div class="summary-cards">
@@ -1039,6 +1049,51 @@ const GRADE_ORDER: MoveGrade[] = ['brilliant', 'great', 'good', 'inaccuracy', 'm
       gap: 8px;
     }
 
+    .opening-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: #eef2f7;
+      color: #475569;
+    }
+
+    .opening-chip mat-icon {
+      width: 16px;
+      height: 16px;
+      font-size: 16px;
+    }
+
+    .opening-kind {
+      font-weight: 700;
+      color: #475569;
+    }
+
+    .opening-kind--defense {
+      color: #6d28d9;
+    }
+
+    .opening-chip .opening-eco {
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .opening-chip .opening-name {
+      font-weight: 500;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 900px) {
+      .opening-chip {
+        max-width: 100%;
+        font-size: 0.78rem;
+      }
+    }
+
     .review-focus {
       display: flex;
       align-items: flex-start;
@@ -1600,6 +1655,11 @@ export class AnalysisComponent implements OnInit, OnDestroy {
 
   gradeLabel(grade: MoveGrade): string {
     return this.language.t(`analysis.cls.${grade}` as 'analysis.cls.good');
+  }
+
+  /** The ECO line framed for the reviewing player: his opening when White, his defense when Black. */
+  playerOpening(opening: AnalysisReport['opening'], side: 'white' | 'black') {
+    return resolvePlayerOpening(opening, side);
   }
 
   /** One Material icon per classification so the badge reads at a glance. */

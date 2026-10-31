@@ -20,7 +20,7 @@ import { PromotionDialog, PROMOTION_DIALOG_RESULT_TYPE } from 'cm-chessboard/src
 import { Chess, Square } from 'chess.js';
 
 import { StockfishEngineService } from '../../core/services/stockfish-engine.service';
-import { MoveAnalysisApiService, AnalysisReport, AnalysisSummary } from '../../core/services/move-analysis-api.service';
+import { MoveAnalysisApiService, AnalysisReport, AnalysisSummary, MoveGrade, playerOpening as resolvePlayerOpening } from '../../core/services/move-analysis-api.service';
 import { GameHistoryService } from '../../core/services/game-history.service';
 import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/i18n/language.service';
@@ -286,12 +286,24 @@ export interface MoveRecord {
                               ·
                               {{ language.t('analysis.depthLabel') }} {{ analysisSummary.depth }}
                             </span>
+                            <span class="postgame-opening" *ngIf="playerOpening(analysisOpening, playerColor) as info">
+                              <mat-icon>menu_book</mat-icon>
+                              {{ language.t(info.labelKey) }} · {{ info.eco }} · {{ info.name }}
+                            </span>
                           </div>
                           <div *ngSwitchCase="'failed'" class="postgame-result">
                             <mat-icon color="warn">cloud_off</mat-icon>
                             <span>{{ analysisError }}</span>
                           </div>
                         </ng-container>
+                        <div class="postgame-grades" *ngIf="analysisStatus === 'completed' && gradeTally().length">
+                          <span class="grade-pill grade-pill--{{ entry.grade }}"
+                                *ngFor="let entry of gradeTally()"
+                                [matTooltip]="gradeLabel(entry.grade)">
+                            <mat-icon>{{ gradeIcon(entry.grade) }}</mat-icon>
+                            {{ entry.count }}
+                          </span>
+                        </div>
                         <button
                           mat-stroked-button
                           color="primary"
@@ -1797,6 +1809,7 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
   private currentGameId: string | null = null;
   private liveAnalysisGameId = crypto.randomUUID();
   analysisSummary: AnalysisSummary | null = null;
+  analysisOpening: AnalysisReport['opening'] = null;
   analysisError = '';
   analysisProgress = 0;
   analysisExpectedPlies = 0;
@@ -2602,6 +2615,7 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
     if (report.status === 'COMPLETED') {
       this.analysisStatus = 'completed';
       this.analysisSummary = report.summary;
+      this.analysisOpening = report.opening;
       this.stopAnalysisTimer();
       this.updateHistoryAnalysisStatus('COMPLETED');
     } else if (report.status === 'FAILED') {
@@ -2613,6 +2627,43 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
       this.analysisStatus = 'running';
       this.updateHistoryAnalysisStatus('IN_PROGRESS');
     }
+  }
+
+  /* ------------------- Post-game grade tally ------------------- */
+
+  private static readonly GRADE_ORDER: MoveGrade[] =
+    ['brilliant', 'great', 'good', 'inaccuracy', 'mistake', 'blunder', 'book', 'forced'];
+
+  /** The one Material icon per classification, shared with the game review page. */
+  gradeIcon(grade: MoveGrade): string {
+    switch (grade) {
+      case 'brilliant': return 'auto_awesome';
+      case 'great': return 'workspace_premium';
+      case 'good': return 'check_circle';
+      case 'book': return 'menu_book';
+      case 'forced': return 'push_pin';
+      case 'inaccuracy': return 'error_outline';
+      case 'mistake': return 'warning';
+      case 'blunder': return 'dangerous';
+      default: return 'check_circle';
+    }
+  }
+
+  gradeLabel(grade: MoveGrade): string {
+    return this.language.t(`analysis.cls.${grade}` as 'analysis.cls.good');
+  }
+
+  /** The ECO line framed for the human player: his opening when White, his defense when Black. */
+  playerOpening(opening: AnalysisReport['opening'], side: 'white' | 'black') {
+    return resolvePlayerOpening(opening, side);
+  }
+
+  /** Only classification buckets that actually occurred, in severity order. */
+  gradeTally(): { grade: MoveGrade; count: number }[] {
+    const counts = this.analysisSummary?.classifications ?? {};
+    return GameVsBotComponent.GRADE_ORDER
+      .filter(grade => (counts[grade] ?? 0) > 0)
+      .map(grade => ({ grade, count: counts[grade] ?? 0 }));
   }
 
   private failAnalysis(error: any): void {
@@ -2699,6 +2750,7 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
     this.analysisStatus = 'off';
     this.analysisRequestId = null;
     this.analysisSummary = null;
+    this.analysisOpening = null;
     this.analysisError = '';
     this.analysisProgress = 0;
     this.analysisExpectedPlies = 0;

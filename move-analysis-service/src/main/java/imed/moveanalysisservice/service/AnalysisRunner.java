@@ -49,6 +49,7 @@ public class AnalysisRunner {
     private final AnalysisQueue analysisQueue;
     private final AnalysisMetrics analysisMetrics;
     private final EvalCache evalCache;
+    private final OpeningBook openingBook;
     private final AtomicReference<UUID> lastLiveGameId = new AtomicReference<>();
 
     public AnalysisRunner(GameAnalysisRepository gameAnalysisRepository,
@@ -58,7 +59,8 @@ public class AnalysisRunner {
                           ObjectMapper objectMapper,
                           AnalysisQueue analysisQueue,
                           AnalysisMetrics analysisMetrics,
-                          EvalCache evalCache) {
+                          EvalCache evalCache,
+                          OpeningBook openingBook) {
         this.gameAnalysisRepository = gameAnalysisRepository;
         this.moveAnalysisRepository = moveAnalysisRepository;
         this.stockfishPool = stockfishPool;
@@ -67,6 +69,7 @@ public class AnalysisRunner {
         this.analysisQueue = analysisQueue;
         this.analysisMetrics = analysisMetrics;
         this.evalCache = evalCache;
+        this.openingBook = openingBook;
     }
 
     public void run(AnalysisQueue.ClaimedJob job) {
@@ -127,6 +130,12 @@ public class AnalysisRunner {
 
     public void completeFromStoredMoves(GameAnalysis analysis) {
         List<MoveAnalysis> rows = moveAnalysisRepository.findByGameAnalysisIdOrderByPlyAsc(analysis.getId());
+        openingBook.apply(rows);
+        List<String> sans = rows.stream().map(MoveAnalysis::getSan).toList();
+        openingBook.nameOf(sans).ifPresent(named -> {
+            analysis.setOpeningEco(named.eco());
+            analysis.setOpeningName(named.name());
+        });
         for (MoveAnalysis row : rows) {
             row.setIsPreliminary(Boolean.FALSE);
         }
@@ -168,6 +177,7 @@ public class AnalysisRunner {
             analysis.setAnalysisConfig(analysisConfigJson());
             analysis = gameAnalysisRepository.save(analysis);
 
+            List<String> played = new ArrayList<>();
             if (plies.isEmpty()) {
                 MoveAnalysis row = analysePosition(analysis);
                 stored.add(row);
@@ -182,6 +192,12 @@ public class AnalysisRunner {
                     EngineEvaluation before = evaluateCached(process, ply.fenBefore());
                     EngineEvaluation after = evaluateCached(process, ply.fenAfter());
                     MoveAnalysis row = buildRow(analysis, ply, before, after);
+                    played.add(ply.san());
+                    if (openingBook.isBook(played, played.size() - 1)
+                            && (row.getClassification() == null
+                            || row.getClassification() == MoveClassification.GOOD)) {
+                        row.setClassification(MoveClassification.BOOK);
+                    }
                     stored.add(moveAnalysisRepository.save(row));
                     analysis.setCompletedPlies(stored.size());
                     analysis.setEngineName(before.engineName());
@@ -195,6 +211,11 @@ public class AnalysisRunner {
                 }
             }
 
+            OpeningBook.Named named = openingBook.nameOf(played).orElse(null);
+            if (named != null) {
+                analysis.setOpeningEco(named.eco());
+                analysis.setOpeningName(named.name());
+            }
             analysis.setStatus(AnalysisStatus.COMPLETED);
             analysis.setCompletedPlies(stored.size());
             analysis.setExpectedPlies(stored.size());

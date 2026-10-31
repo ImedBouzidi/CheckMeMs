@@ -21,6 +21,9 @@ public interface MoveAnalysisRepository extends JpaRepository<MoveAnalysis, UUID
 
     long countByGameAnalysisIdAndStatus(UUID gameAnalysisId, MoveAnalysisStatus status);
 
+    /** Finalize polls this while the tail of the live stream settles; each call sees fresh commits. */
+    long countByGameAnalysisId(UUID gameAnalysisId);
+
     /** A retry replaces the whole result set, so a bulk delete keeps the restart cheap. */
     @Modifying
     @Transactional

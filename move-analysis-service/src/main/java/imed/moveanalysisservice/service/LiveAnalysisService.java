@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import imed.moveanalysisservice.config.LiveAnalysisConfig;
 import imed.moveanalysisservice.dto.request.FinalizeLiveAnalysisRequest;
 import imed.moveanalysisservice.dto.request.LiveMoveAnalysisRequest;
+import imed.moveanalysisservice.config.LiveAnalysisProperties;
 import imed.moveanalysisservice.exception.AnalysisNotFoundException;
 import imed.moveanalysisservice.exception.ForbiddenException;
 import imed.moveanalysisservice.model.AnalysisJobType;
@@ -15,14 +16,16 @@ import imed.moveanalysisservice.model.MoveAnalysisStatus;
 import imed.moveanalysisservice.repository.GameAnalysisRepository;
 import imed.moveanalysisservice.repository.MoveAnalysisRepository;
 import java.time.OffsetDateTime;
-import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.KafkaException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 public class LiveAnalysisService {
@@ -38,6 +41,8 @@ public class LiveAnalysisService {
     private final AnalysisQueue analysisQueue;
     private final EvalCache evalCache;
     private final AnalysisRunner analysisRunner;
+    private final LiveAnalysisProperties properties;
+    private final TransactionTemplate tx;
 
     public LiveAnalysisService(KafkaTemplate<String, String> kafkaTemplate,
                                ObjectMapper objectMapper,
@@ -45,7 +50,9 @@ public class LiveAnalysisService {
                                MoveAnalysisRepository moveAnalysisRepository,
                                AnalysisQueue analysisQueue,
                                EvalCache evalCache,
-                               AnalysisRunner analysisRunner) {
+                               AnalysisRunner analysisRunner,
+                               LiveAnalysisProperties properties,
+                               PlatformTransactionManager transactionManager) {
         this.kafkaTemplate = kafkaTemplate;
         this.objectMapper = objectMapper;
         this.gameAnalysisRepository = gameAnalysisRepository;
@@ -53,6 +60,8 @@ public class LiveAnalysisService {
         this.analysisQueue = analysisQueue;
         this.evalCache = evalCache;
         this.analysisRunner = analysisRunner;
+        this.properties = properties;
+        this.tx = new TransactionTemplate(transactionManager);
     }
 
     @Transactional
@@ -85,13 +94,32 @@ public class LiveAnalysisService {
     }
 
     /**
-     * Close a live review. The job only settles once every streamed ply has been searched, so a
-     * finalize that arrives before the tail of the topic leaves the aggregate PROCESSING and the
-     * consumer completes it later.
+     * Close a live review. Fencing the stream holds a database transaction only briefly; the tail
+     * of the topic then gets a bounded window to settle, and afterwards the stored rows — never a
+     * depth-18 re-run — are summarised. Rows are only searched once, so a finalize that arrives
+     * before the tail leaves the aggregate PROCESSING and the consumer completes it later.
      */
-    @Transactional
     public GameAnalysis finaliseGame(UUID gameId, FinalizeLiveAnalysisRequest request, String requester) {
-        GameAnalysis analysis = gameAnalysisRepository.findByGameIdAndProfile(gameId, PROFILE)
+        GameAnalysis finalized = Objects.requireNonNull(
+                tx.execute(status -> close(gameId, request, requester)),
+                "finalize close step returned no analysis");
+
+        int stored = awaitSettlement(finalized.getId(), nvl(finalized.getExpectedPlies()));
+        if (stored == 0 && finalized.getPgn() != null && !finalized.getPgn().isBlank()) {
+            // Nothing was stored at all (Kafka and its consumer were down the whole game), so the
+            // batch replay is the only way to a review. There are no streamed rows to delete or
+            // re-run, and the engine keeps the review from staying open forever.
+            return Objects.requireNonNull(tx.execute(status -> replayPgnBatch(finalized.getId(), finalized.getPgn())),
+                    "finalize replay step returned no analysis");
+        }
+        GameAnalysis settled = tx.execute(status -> summarise(finalized.getId()));
+        return Objects.requireNonNull(settled, "finalize settle step returned no analysis");
+    }
+
+    /** Stamp the finalization before the wait so streamed plies settle against a fenced stream. */
+    private GameAnalysis close(UUID gameId, FinalizeLiveAnalysisRequest request, String requester) {
+        GameAnalysis analysis = gameAnalysisRepository
+                .findByGameIdAndProfile(gameId, PROFILE)
                 .orElseThrow(() -> new AnalysisNotFoundException("No live analysis for game: " + gameId));
         if (requester == null || requester.isBlank()) {
             throw new ForbiddenException("An authenticated caller is required");
@@ -104,25 +132,53 @@ public class LiveAnalysisService {
         if (!pgn.isEmpty()) {
             analysis.setPgn(pgn);
         }
-        int streamed = moveAnalysisRepository.findByGameAnalysisIdOrderByPlyAsc(analysis.getId()).size();
         analysis.setExpectedPlies(Math.max(Math.max(nvl(analysis.getExpectedPlies()),
-                nvl(request.expectedPlies())), streamed));
+                nvl(request.expectedPlies())), streamed(analysis.getId())));
         analysis.setFinalizedAt(OffsetDateTime.now());
+        return gameAnalysisRepository.save(analysis);
+    }
 
-        if (streamed == 0 && !pgn.isEmpty()) {
-            // Nothing reached the engine (Kafka or its consumer was down), so fall back to the
-            // batch replay of the PGN instead of leaving an empty review open forever.
-            analysis.setStatus(AnalysisStatus.PENDING);
-            analysis.setCompletedPlies(0);
-            analysis.setExpectedPlies(0);
-            analysis = gameAnalysisRepository.save(analysis);
-            analysisQueue.enqueue(analysis.getId(), AnalysisJobType.GAME, FINALIZE_PRIORITY, "{}");
-            return analysis;
+    /** Poll the stored-row count outside any transaction, so the tail keeps committing meanwhile. */
+    private int awaitSettlement(UUID analysisId, int expectedPlies) {
+        int stored = streamed(analysisId);
+        long deadline = System.currentTimeMillis() + Math.max(0, properties.getFinalizeWaitMs());
+        long pollMs = Math.max(1, properties.getFinalizePollMs());
+        while (stored < expectedPlies && System.currentTimeMillis() < deadline) {
+            try {
+                Thread.sleep(pollMs);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+            stored = streamed(analysisId);
         }
+        return stored;
+    }
 
-        analysis = gameAnalysisRepository.save(analysis);
+    /** Complete the closed review from the rows that are already stored — delete and re-run nothing. */
+    private GameAnalysis summarise(UUID analysisId) {
+        GameAnalysis analysis = gameAnalysisRepository.findById(analysisId)
+                .orElseThrow(() -> new AnalysisNotFoundException("No live analysis for game: " + analysisId));
+        analysis.setCompletedPlies(Math.max(nvl(analysis.getCompletedPlies()), streamed(analysisId)));
         completeIfSettled(analysis);
+        return gameAnalysisRepository.save(analysis);
+    }
+
+    /** Last-resort escape hatch for a game whose stream produced nothing; no rows get deleted. */
+    private GameAnalysis replayPgnBatch(UUID analysisId, String pgn) {
+        GameAnalysis analysis = gameAnalysisRepository.findById(analysisId)
+                .orElseThrow(() -> new AnalysisNotFoundException("No live analysis for game: " + analysisId));
+        analysis.setPgn(pgn);
+        analysis.setStatus(AnalysisStatus.PENDING);
+        analysis.setCompletedPlies(0);
+        analysis.setExpectedPlies(0);
+        analysis = gameAnalysisRepository.save(analysis);
+        analysisQueue.enqueue(analysisId, AnalysisJobType.GAME, FINALIZE_PRIORITY, "{}");
         return analysis;
+    }
+
+    private int streamed(UUID analysisId) {
+        return (int) moveAnalysisRepository.countByGameAnalysisId(analysisId);
     }
 
     /** Complete the aggregate when the game is finalized and the streamed plies are all in. */

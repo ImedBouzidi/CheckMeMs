@@ -49,6 +49,17 @@ import { ThemeService } from '../../core/services/theme.service';
         </span>
       </a>
 
+      <button
+        mat-button
+        class="kids-mode-button"
+        type="button"
+        routerLink="/kids"
+        routerLinkActive="active"
+        [attr.aria-label]="language.t('nav.kids')">
+        <mat-icon>child_care</mat-icon>
+        <span class="kids-mode-label">{{ language.t('nav.kids') }}</span>
+      </button>
+
       <span class="spacer"></span>
 
       <div class="toolbar-tools">
@@ -107,7 +118,10 @@ import { ThemeService } from '../../core/services/theme.service';
           </button>
         </mat-menu>
       } @else {
-        <a mat-button class="toolbar-login" routerLink="/auth/login">{{ language.t('nav.login') }}</a>
+        <a mat-stroked-button class="toolbar-login" routerLink="/auth/login">
+          <mat-icon>login</mat-icon>
+          {{ language.t('nav.login') }}
+        </a>
         <a mat-flat-button class="toolbar-signup" routerLink="/auth/register">
           {{ language.t('nav.signup') }}
           <mat-icon>arrow_forward</mat-icon>
@@ -422,8 +436,69 @@ import { ThemeService } from '../../core/services/theme.service';
     }
 
     .toolbar-login {
-      color: #e2e8f0;
-      font-weight: 600;
+      display: inline-flex;
+      min-height: 40px;
+      padding: 0 16px;
+      border: 1px solid rgba(147, 197, 253, 0.5);
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.28), rgba(30, 41, 59, 0.72));
+      box-shadow: 0 8px 18px -12px rgba(37, 99, 235, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      color: #f8fafc;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.01em;
+      transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .toolbar-login mat-icon {
+      width: 17px;
+      height: 17px;
+      margin-inline-end: 4px;
+      color: #93c5fd;
+      font-size: 17px;
+    }
+
+    .toolbar-login:hover {
+      border-color: #60a5fa;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.52), rgba(30, 64, 175, 0.82));
+      box-shadow: 0 12px 24px -12px rgba(37, 99, 235, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .toolbar-login:focus-visible {
+      outline: 2px solid #60a5fa;
+      outline-offset: 2px;
+    }
+
+    .kids-mode-button {
+      min-height: 40px;
+      margin-inline-end: 10px;
+      padding: 0 14px;
+      border: 1px solid rgba(233, 213, 255, 0.32);
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(217, 70, 239, 0.2), rgba(59, 130, 246, 0.16));
+      color: #f5f3ff;
+      font-weight: 700;
+      font-size: 0.8rem;
+      transition: filter 0.18s ease;
+    }
+
+    .kids-mode-button mat-icon {
+      width: 18px;
+      height: 18px;
+      margin-inline-end: 2px;
+      color: #f0abfc;
+      font-size: 18px;
+    }
+
+    .kids-mode-button:hover {
+      filter: brightness(1.35);
+    }
+
+    .kids-mode-button.active {
+      border-color: rgba(240, 171, 252, 0.7);
+      box-shadow: 0 8px 18px -12px rgba(217, 70, 239, 0.9);
     }
 
     .toolbar-signup {
@@ -655,8 +730,26 @@ import { ThemeService } from '../../core/services/theme.service';
 
       .toolbar-login {
         min-width: auto;
-        padding: 0 8px;
+        min-height: 36px;
+        padding: 0 12px;
         font-size: 0.82rem;
+      }
+
+      .kids-mode-button {
+        min-height: 36px;
+        margin-inline-end: 4px;
+        padding: 0 10px;
+      }
+
+      .kids-mode-label {
+        display: none;
+      }
+
+      .kids-mode-button mat-icon {
+        width: 20px;
+        height: 20px;
+        margin: 0;
+        font-size: 20px;
       }
 
       .toolbar-signup {

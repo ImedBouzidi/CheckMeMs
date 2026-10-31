@@ -19,6 +19,8 @@ public record AnalysisResponse(
         String engineName,
         String engineVersion,
         String configVersion,
+        String openingEco,
+        String openingName,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
         OffsetDateTime completedAt,

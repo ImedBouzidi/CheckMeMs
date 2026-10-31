@@ -628,6 +628,60 @@ import { Chess } from 'chess.js';
       color: #94a3b8;
     }
 
+    :host-context(html.dark-theme) .auth-panel {
+      background:
+        radial-gradient(620px 400px at 100% 0%, rgba(37, 99, 235, 0.16), transparent 65%),
+        linear-gradient(180deg, #101a2b, #0b1220);
+    }
+
+    :host-context(html.dark-theme) .auth-card {
+      border-color: rgba(71, 85, 105, 0.72);
+      background: rgba(17, 28, 46, 0.98);
+      box-shadow: 0 30px 65px -34px rgba(0, 0, 0, 0.75);
+    }
+
+    :host-context(html.dark-theme) .auth-card .mat-mdc-text-field-wrapper {
+      background-color: #18263b;
+    }
+
+    :host-context(html.dark-theme) .auth-card .mdc-text-field--outlined .mdc-notched-outline__leading,
+    :host-context(html.dark-theme) .auth-card .mdc-text-field--outlined .mdc-notched-outline__notch,
+    :host-context(html.dark-theme) .auth-card .mdc-text-field--outlined .mdc-notched-outline__trailing {
+      border-color: #41536e;
+    }
+
+    :host-context(html.dark-theme) .auth-card .mdc-text-field--outlined:hover .mdc-notched-outline__leading,
+    :host-context(html.dark-theme) .auth-card .mdc-text-field--outlined:hover .mdc-notched-outline__notch,
+    :host-context(html.dark-theme) .auth-card .mdc-text-field--outlined:hover .mdc-notched-outline__trailing {
+      border-color: #7aaef5;
+    }
+
+    :host-context(html.dark-theme) .auth-card .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+    :host-context(html.dark-theme) .auth-card .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+    :host-context(html.dark-theme) .auth-card .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+      border-color: #60a5fa;
+      border-width: 2px;
+    }
+
+    :host-context(html.dark-theme) .auth-card input,
+    :host-context(html.dark-theme) .auth-card .mat-mdc-form-field-infix,
+    :host-context(html.dark-theme) .auth-card .mat-mdc-form-field label {
+      color: #e8eefc;
+    }
+
+    :host-context(html.dark-theme) .auth-card input::placeholder {
+      color: #8fa2bd;
+    }
+
+    :host-context(html.dark-theme) .auth-card .google-btn {
+      border-color: #41536e;
+      color: #dbeafe;
+    }
+
+    :host-context(html.dark-theme) .auth-card .google-btn:hover {
+      background: #1d2d45;
+    }
+
     .password-hint {
       display: flex;
       align-items: center;
@@ -647,10 +701,18 @@ import { Chess } from 'chess.js';
       width: 100%;
       min-height: 47px;
       border-radius: 12px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
       font-size: 0.9rem;
       font-weight: 700;
       letter-spacing: 0;
-      box-shadow: 0 10px 22px -14px rgba(37, 99, 235, 0.8);
+      box-shadow: 0 14px 26px -14px rgba(37, 99, 235, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    }
+
+    .register-btn:not(:disabled):hover {
+      filter: brightness(1.08);
+      box-shadow: 0 18px 30px -14px rgba(37, 99, 235, 1), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+      transform: translateY(-1px);
     }
 
     .register-btn .mat-icon {

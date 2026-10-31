@@ -44,6 +44,8 @@ interface RawAnalysisResponse {
   moveCount: number | null;
   moves: RawMoveAnalysis[] | null;
   summary: string | Record<string, unknown> | null;
+  openingEco?: string | null;
+  openingName?: string | null;
 }
 
 export interface ReviewedMove {
@@ -86,6 +88,37 @@ export interface AnalysisReport {
   moveCount: number;
   moves: ReviewedMove[];
   summary: AnalysisSummary | null;
+  /** The detected ECO opening, e.g. `{ eco: 'C60', name: 'Ruy Lopez' }`, or null when unnamed. */
+  opening: { eco: string; name: string } | null;
+}
+
+/** The ECO line presented for one side of the board. */
+export interface PlayerOpening {
+  kind: 'opening' | 'defense';
+  /** Translation key of the kind label. */
+  labelKey: 'analysis.opening' | 'analysis.defense';
+  eco: string;
+  name: string;
+}
+
+/**
+ * A game carries a single ECO classification, but the two sides read it differently: the White
+ * player steered the opening (full line name, e.g. "Ruy Lopez: Closed"), while the Black player
+ * adopted a defense (the named family, deep sub-lines like ", Main Line, Mieses Variation" that
+ * describe related tactical plans are dropped).
+ */
+export function playerOpening(opening: AnalysisReport['opening'],
+                              side: 'white' | 'black'): PlayerOpening | null {
+  if (!opening) return null;
+  if (side === 'white') {
+    return { kind: 'opening', labelKey: 'analysis.opening', eco: opening.eco, name: opening.name };
+  }
+  return {
+    kind: 'defense',
+    labelKey: 'analysis.defense',
+    eco: opening.eco,
+    name: opening.name.split(',')[0].trim()
+  };
 }
 
 export interface LiveFinalizeResponse {
@@ -221,7 +254,10 @@ export class MoveAnalysisApiService {
       status: raw.status,
       moveCount: raw.moveCount ?? 0,
       moves,
-      summary: this.parseSummary(raw.summary)
+      summary: this.parseSummary(raw.summary),
+      opening: raw.openingEco || raw.openingName
+        ? { eco: raw.openingEco ?? '', name: raw.openingName ?? '' }
+        : null
     };
   }
 

@@ -90,6 +90,14 @@ public class AnalysisServiceImpl implements AnalysisService {
         if (existing.isPresent()) {
             GameAnalysis analysis = existing.get();
             assertAccess(analysis, requester);
+            if (isLiveStream(analysis)) {
+                if (analysis.getStatus() != AnalysisStatus.COMPLETED) {
+                    // The streamed review owns its rows; a batch re-run would delete them and
+                    // search the whole game again at depth 18 for nothing.
+                    return response(analysis, "Analysis already in progress");
+                }
+                return response(analysis, "Analysis already completed");
+            }
             if (analysis.getStatus() == AnalysisStatus.FAILED) {
                 resetForRetry(analysis);
                 analysis = gameAnalysisRepository.save(analysis);
@@ -181,6 +189,11 @@ public class AnalysisServiceImpl implements AnalysisService {
         if (analysis.getStatus() == AnalysisStatus.COMPLETED) {
             return response(analysis, "Analysis already completed");
         }
+        if (isLiveStream(analysis)) {
+            // The streamed plies are the authoritative result; wiping them for a depth-18 re-run
+            // would destroy a finished review.
+            return response(analysis, "Analysis already in progress");
+        }
         resetForRetry(analysis);
         analysis = gameAnalysisRepository.save(analysis);
         enqueue(analysis);
@@ -197,6 +210,10 @@ public class AnalysisServiceImpl implements AnalysisService {
 
     private void enqueue(GameAnalysis analysis) {
         analysisQueue.enqueue(analysis.getId(), AnalysisJobType.GAME, JOB_PRIORITY, "{}");
+    }
+
+    private boolean isLiveStream(GameAnalysis analysis) {
+        return "live".equals(analysis.getConfigVersion());
     }
 
     private int countPlies(String pgn) {
@@ -242,6 +259,8 @@ public class AnalysisServiceImpl implements AnalysisService {
                 analysis.getEngineName(),
                 analysis.getEngineVersion(),
                 analysis.getConfigVersion(),
+                analysis.getOpeningEco(),
+                analysis.getOpeningName(),
                 analysis.getCreatedAt(),
                 analysis.getUpdatedAt(),
                 analysis.getCompletedAt(),

@@ -70,6 +70,40 @@ class AnalysisServiceImplTest {
     }
 
     @Test
+    void submitDoesNotWipeLiveRows() {
+        GameAnalysis live = analysis(AnalysisStatus.PROCESSING, "owner");
+        live.setConfigVersion("live");
+        live.setCompletedPlies(12);
+        when(gameRepository.findByGameIdAndProfile(gameId, "STANDARD")).thenReturn(Optional.of(live));
+
+        SubmitAnalysisResponse response = service.submit(request("1. e4 e5"), "owner");
+
+        assertThat(response.requestId()).isEqualTo(live.getId());
+        assertThat(response.message()).contains("already");
+        // A batch job for this aggregate would delete the streamed rows and re-run the game at
+        // depth 18, so a live review is only ever served from what already streamed.
+        verify(queue, never()).enqueue(any(), any(AnalysisJobType.class), anyInt(), anyString());
+        verify(gameRepository, never()).save(any(GameAnalysis.class));
+        assertThat(live.getCompletedPlies()).isEqualTo(12);
+    }
+
+    @Test
+    void retryKeepsAStreamedReviewIntact() {
+        GameAnalysis live = analysis(AnalysisStatus.FAILED, "owner");
+        live.setConfigVersion("live");
+        live.setCompletedPlies(12);
+        when(gameRepository.findById(live.getId())).thenReturn(Optional.of(live));
+
+        SubmitAnalysisResponse response = service.retry(live.getId(), "owner");
+
+        assertThat(response.requestId()).isEqualTo(live.getId());
+        assertThat(live.getStatus()).isEqualTo(AnalysisStatus.FAILED);
+        assertThat(live.getCompletedPlies()).isEqualTo(12);
+        verify(queue, never()).enqueue(any(), any(AnalysisJobType.class), anyInt(), anyString());
+        verify(gameRepository, never()).save(any(GameAnalysis.class));
+    }
+
+    @Test
     void rejectsInvalidPgn() {
         assertThatThrownBy(() -> service.submit(request("1. e4 e5 2. e5"), "user-1"))
                 .isInstanceOf(IllegalArgumentException.class)

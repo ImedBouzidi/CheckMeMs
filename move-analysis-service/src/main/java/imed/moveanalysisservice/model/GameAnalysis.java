@@ -97,6 +97,12 @@ public class GameAnalysis {
     @Column(name = "finalized_at")
     private OffsetDateTime finalizedAt;
 
+    @Column(name = "opening_eco", length = 3)
+    private String openingEco;
+
+    @Column(name = "opening_name", length = 128)
+    private String openingName;
+
     @Version
     @Column(nullable = false)
     private long version;
@@ -340,6 +346,22 @@ public class GameAnalysis {
 
     public void setFinalizedAt(OffsetDateTime finalizedAt) {
         this.finalizedAt = finalizedAt;
+    }
+
+    public String getOpeningEco() {
+        return openingEco;
+    }
+
+    public void setOpeningEco(String openingEco) {
+        this.openingEco = openingEco;
+    }
+
+    public String getOpeningName() {
+        return openingName;
+    }
+
+    public void setOpeningName(String openingName) {
+        this.openingName = openingName;
     }
 
     public long getVersion() {

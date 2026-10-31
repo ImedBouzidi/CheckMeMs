@@ -1,0 +1,13 @@
+# Root context is only used by move-analysis-service (it builds Stockfish from ../stockfish).
+# Everything the move-analysis image does not need stays out of the build context.
+.git/
+.idea/
+*.iml
+**/target/
+chess-web/
+kafka_2.13-4.4.0/
+kafka_2.13-4.4.0.tgz
+keycloak-21.1.1/
+.stockfish/
+.logs/
+.env

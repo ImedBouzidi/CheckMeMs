@@ -1453,3 +1453,58 @@ html.dark-theme {
 .postgame-stats {
   color: #64748b;
 }
+
+.postgame-opening {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #475569;
+  font-size: 0.74rem;
+  font-weight: 600;
+  max-width: 100%;
+}
+
+.postgame-opening mat-icon {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+}
+
+.postgame-grades {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.grade-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.grade-pill mat-icon {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+}
+
+.grade-pill--brilliant { background: #dbeafe; color: #1d4ed8; }
+.grade-pill--great { background: #dcfce7; color: #15803d; }
+.grade-pill--good { background: #f1f5f9; color: #475569; }
+.grade-pill--book { background: #eef2f7; color: #64748b; }
+.grade-pill--forced { background: #e2e8f0; color: #475569; }
+.grade-pill--inaccuracy { background: #fef9c3; color: #a16207; }
+.grade-pill--mistake { background: #ffedd5; color: #c2410c; }
+.grade-pill--blunder { background: #fee2e2; color: #b91c1c; }
