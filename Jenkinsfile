@@ -52,6 +52,16 @@ pipeline {
             }
         }
 
+        stage('Start test dependencies') {
+            when { expression { params.RUN_TESTS } }
+            steps {
+                sh '''
+                    docker compose up -d --wait \
+                        postgres redis rabbitmq kafka eureka-server keycloak
+                '''
+            }
+        }
+
         stage('Tests') {
             when { expression { params.RUN_TESTS } }
             parallel {
@@ -60,15 +70,40 @@ pipeline {
                     agent {
                         docker {
                             image 'maven:3.9-eclipse-temurin-21'
-                            args '-v maven-cache:/root/.m2'
+                            args '''--network checkmems_chess-net
+                                -e SPRING_PROFILES_ACTIVE=docker
+                                -e DB_HOST=postgres
+                                -e DB_USERNAME=chess_user
+                                -e DB_PASSWORD=chess_pass
+                                -e SERVER_PORT=0
+                                -e REDIS_HOST=redis
+                                -e RABBITMQ_HOST=rabbitmq
+                                -e RABBITMQ_USERNAME=chess_user
+                                -e RABBITMQ_PASSWORD=chess_pass
+                                -e KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+                                -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+                                -e OAUTH2_ISSUER_URI=http://keycloak:8080/realms/chess-platform
+                                -e OAUTH2_JWK_SET_URI=http://keycloak:8080/realms/chess-platform/protocol/openid-connect/certs
+                                -e TEST_DB_URL=jdbc:postgresql://postgres:5432/chess_analysis-service
+                                -e TEST_DB_USER=chess_user
+                                -e TEST_DB_PASSWORD=chess_pass
+                                -v maven-cache:/root/.m2'''
                         }
                     }
                     steps {
                         script {
+                            def databaseNames = [
+                                'games-service': 'chess_game',
+                                'user-profile-service': 'chess_user_profile',
+                                'learning-service': 'chess_learning-service',
+                                'move-analysis-service': 'chess_analysis-service'
+                            ]
                             env.JAVA_SERVICE_NAMES.split(' ').each { svc ->
                                 dir(svc) {
                                     echo "Unit tests: ${svc}"
-                                    sh 'mvn -B test'
+                                    withEnv(["DB_NAME=${databaseNames.get(svc, '')}"]) {
+                                        sh 'mvn -B test'
+                                    }
                                 }
                             }
                         }
@@ -90,6 +125,11 @@ pipeline {
                             sh 'npm ci'
                             sh 'npx ng build --configuration production'
                         }
+                    }
+                }
+                post {
+                    always {
+                        sh 'docker compose stop postgres redis rabbitmq kafka eureka-server keycloak || true'
                     }
                 }
             }
