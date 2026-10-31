@@ -5,8 +5,6 @@ import 'package:provider/provider.dart';
 
 import '../../core/i18n/language_service.dart';
 import '../../core/models/course.dart';
-import '../../core/models/game_history.dart';
-import '../../core/services/auth_service.dart';
 import '../../core/services/course_service.dart';
 import '../../core/services/learning_progress_service.dart';
 import '../../core/services/premium_service.dart';
@@ -28,8 +26,6 @@ class _LearnScreenState extends State<LearnScreen> {
     final premium = context.watch<PremiumService>();
     final courseService = context.read<CourseService>();
     final progress = context.watch<LearningProgressService>();
-    final cm = context.cm;
-    final tt = context.tt;
 
     // Overall course progress across every course the learner may open.
     var doneLessons = 0;
@@ -46,73 +42,19 @@ class _LearnScreenState extends State<LearnScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Page header mirroring .cm-page-header
-          Container(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: cm.line)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CmEyebrow(language.t('learn.eyebrow')),
-                      const SizedBox(height: 10),
-                      Text(
-                        language.t('learn.title'),
-                        style: tt.headlineLarge?.copyWith(fontWeight: FontWeight.w800, height: 1.02, letterSpacing: -0.2),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        language.t('learn.subtitle'),
-                        style: tt.bodyLarge?.copyWith(color: cm.inkSoft, height: 1.5),
-                      ),
-                    ],
-                  ),
-                ),
-                // Premium tag
-                const SizedBox(width: 16),
-                CmTag(
-                  premium.isPremium ? language.t('learn.hub.premiumActive') : language.t('learn.hub.freePlan'),
-                  tone: premium.isPremium ? 'gold' : 'slate',
-                  icon: premium.isPremium ? Icons.workspace_premium_rounded : Icons.lock_open_rounded,
-                ),
-              ],
-            ),
+          _LearnHeader(
+            language: language,
+            premium: premium,
           ),
 
           // Featured course spotlight
           if (courseService.courses.isNotEmpty) ...[
-            Container(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: cm.line)),
-              ),
-              child: SingleChildScrollView(
-                physics: const NeverScrollableScrollPhysics(),
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    // Featured course card
-                    _FeaturedCourseCard(
-                      course: courseService.courses.first,
-                      courseService: courseService,
-                      progress: progress,
-                      premium: premium,
-                      onTap: () => context.go(AppRoutes.lesson(courseService.courses.first.id, '1')),
-                      language: language,
-                    ),
-                    const SizedBox(width: 16),
-                    // Remaining courses summary
-                    _RemainingCoursesSummary(
-                      courseService: courseService,
-                      progress: progress,
-                      premium: premium,
-                    ),
-                  ],
-                ),
-              ),
+            _FeaturedCourseSpotlight(
+              course: courseService.courses.first,
+              courseService: courseService,
+              progress: progress,
+              premium: premium,
+              onTap: () => context.go(AppRoutes.lesson(courseService.courses.first.id, '1')),
             ),
           ],
 
@@ -137,7 +79,7 @@ class _LearnScreenState extends State<LearnScreen> {
                     courseService: courseService,
                     progress: progress,
                     premium: premium,
-                    onTap: (course) => context.go(AppRoutes.lesson(course.id, '1')),
+                    onTap: () => context.go(AppRoutes.lesson(course.id, '1')),
                   ),
                 ],
               ),
@@ -149,14 +91,63 @@ class _LearnScreenState extends State<LearnScreen> {
   }
 }
 
-class _FeaturedCourseCard extends StatelessWidget {
-  const _FeaturedCourseCard({
+class _LearnHeader extends StatelessWidget {
+  const _LearnHeader({
+    required this.language,
+    required this.premium,
+  });
+
+  final LanguageService language;
+  final PremiumService premium;
+
+  @override
+  Widget build(BuildContext context) {
+    final cm = context.cm;
+    final tt = context.tt;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: cm.line)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CmEyebrow(language.t('learn.eyebrow')),
+                const SizedBox(height: 10),
+                Text(
+                  language.t('learn.title'),
+                  style: tt.headlineLarge?.copyWith(fontWeight: FontWeight.w800, height: 1.02, letterSpacing: -0.2),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  language.t('learn.subtitle'),
+                  style: tt.bodyLarge?.copyWith(color: cm.inkSoft, height: 1.5),
+                ),
+              ],
+            ),
+          ),
+          CmTag(
+            premium.isPremium ? language.t('learn.hub.premiumActive') : language.t('learn.hub.freePlan'),
+            tone: premium.isPremium ? 'gold' : 'slate',
+            icon: premium.isPremium ? Icons.workspace_premium_rounded : Icons.lock_open_rounded,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeaturedCourseSpotlight extends StatelessWidget {
+  const _FeaturedCourseSpotlight({
     required this.course,
     required this.courseService,
     required this.progress,
     required this.premium,
     required this.onTap,
-    required this.language,
   });
 
   final Course course;
@@ -164,7 +155,6 @@ class _FeaturedCourseCard extends StatelessWidget {
   final LearningProgressService progress;
   final PremiumService premium;
   final VoidCallback onTap;
-  final LanguageService language;
 
   @override
   Widget build(BuildContext context) {
@@ -174,17 +164,16 @@ class _FeaturedCourseCard extends StatelessWidget {
     final refs = courseService.lessonRefs(course);
     final total = refs.length;
     final done = progress.completedCount(course.id, refs.map((ref) => ref.lesson.id).toList(growable: false));
-    final percent = total > 0 ? ((done / total) * 100).round() : 0;
     final ctaLabel = premium.canOpenCourse(course)
-        ? (total > 0 && done >= total ? language.t('learn.hub.review')
-            : (done > 0 ? language.t('learn.hub.continue') : language.t('learn.hub.start')))
-        : language.t('learn.hub.locked');
+        ? (total > 0 && done >= total ? 'Review' : (done > 0 ? 'Continue' : 'Start'))
+        : 'Locked';
 
     return Container(
-      width: 280,
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
         border: Border.all(color: cm.line),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(CmRadius.md), bottom: Radius.circular(CmRadius.md)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16), bottom: Radius.circular(16)),
         background: LinearGradient(
           colors: [Color(0xFFFFFFFF), Color(0xF8FAFC)],
           begin: Alignment.topLeft,
@@ -200,7 +189,7 @@ class _FeaturedCourseCard extends StatelessWidget {
             aspectRatio: 1.2,
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(top: RadiusRadius(CmRadius.md)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
                 gradient: LinearGradient(
                   colors: [cm.primarySoft, cm.isDark ? Color(0xFF1E2A4A) : Color(0xFFEFF6FF)],
                   begin: Alignment.topLeft,
@@ -239,7 +228,7 @@ class _FeaturedCourseCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      language.t('learn.hub.progress', {'done': done, 'total': total}),
+                      '${done}/$total lessons',
                       style: tt.labelSmall?.copyWith(color: cm.mutedLight),
                     ),
                     // Premium lock indicator
@@ -253,10 +242,10 @@ class _FeaturedCourseCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 // Progress bar
-                CmProgressBar(percent: percent.toDouble(), height: 4),
+                CmProgressBar(percent: (done / total * 100).toDouble(), height: 4),
                 const SizedBox(height: 4),
                 Text(
-                  language.t('learn.hub.progress', {'done': done, 'total': total}),
+                  '${done}/$total lessons',
                   style: tt.labelSmall?.copyWith(color: cm.mutedLight),
                 ),
                 const SizedBox(height: 8),
@@ -270,136 +259,6 @@ class _FeaturedCourseCard extends StatelessWidget {
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RemainingCoursesSummary extends StatelessWidget {
-  const _RemainingCoursesSummary({
-    required this.courseService,
-    required this.progress,
-    required this.premium,
-  });
-
-  final CourseService courseService;
-  final LearningProgressService progress;
-  final PremiumService premium;
-
-  @override
-  Widget build(BuildContext context) {
-    final cm = context.cm;
-    final tt = context.tt;
-    final language = context.watch<LanguageService>();
-
-    // Show first 3 courses as cards in a compact row
-    final visibleCourses = courseService.courses.sublist(1).take(3).toList();
-    final totalCourses = courseService.courses.length;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          language.t('learn.hub.library'),
-          style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 8),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (final course in visibleCourses)
-                _RemainingCourseCard(course: course, progress: progress, premium: premium),
-              const SizedBox(width: 12),
-              // "See all" indicator
-              if (totalCourses > 4)
-                GestureDetector(
-                  onTap: () => context.go('/learn'),
-                  child: Text(
-                    'See all $totalCourses courses',
-                    style: tt.labelMedium?.copyWith(color: cm.primary, fontWeight: FontWeight.w600),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _RemainingCourseCard extends StatelessWidget {
-  const _RemainingCourseCard({
-    required this.course,
-    required this.progress,
-    required this.premium,
-  });
-
-  final Course course;
-  final LearningProgressService progress;
-  final PremiumService premium;
-
-  @override
-  Widget build(BuildContext context) {
-    final cm = context.cm;
-    final tt = context.tt;
-    final language = context.watch<LanguageService>();
-
-    final refs = courseService.lessonRefs(course);
-    final locked = !premium.canOpenCourse(course);
-    final ids = refs.map((ref) => ref.lesson.id).toList(growable: false);
-    final done = progress.completedCount(course.id, ids);
-    final total = ids.length;
-    final percent = total > 0 ? ((done / total) * 100).round() : 0;
-
-    return Container(
-      width: 100,
-      margin: const EdgeInsets.only(right: 8),
-      decoration: BoxDecoration(
-        color: locked ? cm.goldSoft : cm.surface,
-        borderRadius: BorderRadius.circular(CmRadius.md),
-        border: Border.all(color: locked ? cm.goldBorder : cm.line),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Course icon + lock indicator
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Row(
-              children: [
-                CmIconTile(course.icon, tone: course.accent, size: 32, iconSize: 16),
-                if (locked) const Spacer(),
-                if (locked)
-                  Icon(Icons.lock_rounded, size: 14, color: cm.gold)
-                else
-                  CmTag('$percent%', tone: course.accent, dense: true),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6),
-          // Title
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Text(
-              course.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: tt.labelSmall?.copyWith(fontWeight: FontWeight.w600, color: locked ? cm.muted : cm.ink),
-              softWrap: true,
-            ),
-          ),
-          const SizedBox(height: 4),
-          // Progress
-          if (!locked) ...[
-            CmProgressBar(percent: percent.toDouble(), height: 4),
-            const SizedBox(height: 2),
-            Text(
-              language.t('learn.hub.progress', {'done': done, 'total': total}),
-              style: tt.xxxSmall?.copyWith(color: cm.mutedLight),
-            ),
-          ],
         ],
       ),
     );

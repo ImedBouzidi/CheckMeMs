@@ -1,0 +1,1 @@
+/home/imed/Documents/projects/CheckMeMS/chess_mobile/lib/ui/board/chess_board_view.dart

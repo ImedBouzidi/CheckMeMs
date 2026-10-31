@@ -4,8 +4,8 @@ import 'package:chess/chess.dart' as chess_lib;
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../board/board_theme.dart';
-import '../../board/chess_board_view.dart';
+import '../../../ui/board/board_theme.dart';
+import '../../../ui/board/chess_board_view.dart';
 import '../../widgets/cm.dart';
 
 /// The 34-move game the web login/register screens replay on their showcase
