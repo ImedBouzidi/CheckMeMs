@@ -4,4 +4,6 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- The local docker-compose stack serves plain HTTP on localhost:8080/8081. -->
+    <application android:usesCleartextTraffic="true"/>
 </manifest>

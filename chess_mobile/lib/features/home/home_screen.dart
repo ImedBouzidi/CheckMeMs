@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -6,6 +7,10 @@ import '../../core/i18n/language_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../routing/app_router.dart';
 import '../../ui/widgets/cm.dart';
+
+
+import '../../core/theme/app_theme.dart';
+
 
 /// Home page, mirroring `chess-web/src/app/features/home/home.component.ts`:
 /// hero, tools grid and the kids-mode strip.
@@ -16,8 +21,6 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final language = context.watch<LanguageService>();
     final auth = context.watch<AuthService>();
-    final cm = context.cm;
-    final tt = context.tt;
 
     return CmPage(
       child: Column(
@@ -32,57 +35,7 @@ class HomeScreen extends StatelessWidget {
             onAction: () => context.go(AppRoutes.play),
           ),
           const SizedBox(height: 6),
-          _FeatureCard(
-            tone: 'blue',
-            icon: Icons.sports_esports_rounded,
-            tag: language.t('home.playTag'),
-            title: language.t('home.playTitle'),
-            text: language.t('home.playText'),
-            cta: language.t('home.playCta'),
-            meta: language.t('home.playMeta'),
-            primaryCta: true,
-            onTap: () => context.go(AppRoutes.play),
-          ),
-          const SizedBox(height: 12),
-          _FeatureCard(
-            tone: 'gold',
-            icon: Icons.extension_rounded,
-            tag: language.t('home.puzzlesTag'),
-            title: language.t('home.puzzlesTitle'),
-            text: language.t('home.puzzlesText'),
-            cta: language.t('home.puzzlesCta'),
-            onTap: () => context.go(AppRoutes.puzzles),
-          ),
-          const SizedBox(height: 12),
-          _FeatureCard(
-            tone: 'slate',
-            icon: Icons.auto_stories_rounded,
-            tag: language.t('home.openingsTag'),
-            title: language.t('home.openingsTitle'),
-            text: language.t('home.openingsText'),
-            cta: language.t('home.openingsCta'),
-            onTap: () => context.go(AppRoutes.openings),
-          ),
-          const SizedBox(height: 12),
-          _FeatureCard(
-            tone: 'green',
-            icon: Icons.insights_rounded,
-            tag: language.t('home.reviewTag'),
-            title: language.t('home.reviewTitle'),
-            text: language.t('home.reviewText'),
-            cta: language.t('home.reviewCta'),
-            onTap: () => context.go(AppRoutes.analysis),
-          ),
-          const SizedBox(height: 12),
-          _FeatureCard(
-            tone: 'slate',
-            icon: Icons.school_rounded,
-            tag: language.t('home.learnTag'),
-            title: language.t('home.learnTitle'),
-            text: language.t('home.learnText'),
-            cta: language.t('home.learnCta'),
-            onTap: () => context.go(AppRoutes.learn),
-          ),
+          _ToolsGrid(language: language),
           const SizedBox(height: 22),
           _KidsStrip(language: language, signedIn: auth.isAuthenticated),
         ],
@@ -100,8 +53,75 @@ class _Hero extends StatelessWidget {
   Widget build(BuildContext context) {
     final cm = context.cm;
     final tt = context.tt;
+
+    final copy = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CmEyebrow(language.t('home.eyebrow')),
+        const SizedBox(height: 14),
+        Text.rich(
+          TextSpan(
+            style: tt.displaySmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              height: 1.02,
+              letterSpacing: -2.2,
+              color: cm.ink,
+            ),
+            children: [
+              TextSpan(text: '${language.t('home.titleA')}\n'),
+              TextSpan(
+                text: language.t('home.titleB'),
+                style: TextStyle(
+                  foreground: Paint()
+                    ..shader = const LinearGradient(
+                      colors: [Color(0xFF1D4ED8), Color(0xFF2563EB), Color(0xFF0E7490)],
+                    ).createShader(const Rect.fromLTWH(0, 0, 280, 64)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Text(
+            language.t('home.subtitle'),
+            style: tt.bodyLarge?.copyWith(color: cm.inkSoft, height: 1.65),
+          ),
+        ),
+        const SizedBox(height: 22),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            CmPrimaryButton(
+              label: language.t('home.startGame'),
+              icon: Icons.play_arrow_rounded,
+              onPressed: () => context.go(AppRoutes.play),
+            ),
+            CmSecondaryButton(
+              label: language.t('home.reviewGame'),
+              icon: Icons.insights_rounded,
+              onPressed: () => context.go(AppRoutes.analysis),
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        Wrap(
+          spacing: 16,
+          runSpacing: 8,
+          children: [
+            _point(context, language.t('home.point1')),
+            _point(context, language.t('home.point2')),
+            _point(context, language.t('home.point3')),
+          ],
+        ),
+      ],
+    );
+
     return Container(
-      padding: const EdgeInsets.all(26),
+      padding: EdgeInsets.all(26),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
         border: Border.all(color: const Color(0xFFBFDBFE).withValues(alpha: 0.8)),
@@ -115,90 +135,32 @@ class _Hero extends StatelessWidget {
         ),
         boxShadow: CmShadow.lg(cm),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CmEyebrow(language.t('home.eyebrow')),
-          const SizedBox(height: 14),
-          Text.rich(
-            TextSpan(
-              style: tt.displaySmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                height: 1.02,
-                letterSpacing: -2.2,
-                color: cm.ink,
-              ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 880) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TextSpan(text: '${language.t('home.titleA')}\n'),
-                TextSpan(
-                  text: language.t('home.titleB'),
-                  style: TextStyle(
-                    foreground: Paint()
-                      ..shader = const LinearGradient(
-                        colors: [Color(0xFF1D4ED8), Color(0xFF2563EB), Color(0xFF0E7490)],
-                      ).createShader(const Rect.fromLTWH(0, 0, 280, 64)),
+                copy,
+                const SizedBox(height: 26),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 360),
+                    child: _HeroVisual(language: language),
                   ),
                 ),
               ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: Text(
-              language.t('home.subtitle'),
-              style: tt.bodyLarge?.copyWith(color: cm.inkSoft, height: 1.65),
-            ),
-          ),
-          const SizedBox(height: 22),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            crossAxisAlignment: WrapCrossAlignment.center,
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CmPrimaryButton(
-                label: language.t('home.startGame'),
-                icon: Icons.play_arrow_rounded,
-                onPressed: () => context.go(AppRoutes.play),
-              ),
-              CmSecondaryButton(
-                label: language.t('home.reviewGame'),
-                icon: Icons.insights_rounded,
-                onPressed: () => context.go(AppRoutes.analysis),
-              ),
+              Expanded(flex: 11, child: copy),
+              const SizedBox(width: 40),
+              Expanded(flex: 9, child: _HeroVisual(language: language)),
             ],
-          ),
-          const SizedBox(height: 18),
-          Wrap(
-            spacing: 16,
-            runSpacing: 8,
-            children: [
-              _point(context, language.t('home.point1')),
-              _point(context, language.t('home.point2')),
-              _point(context, language.t('home.point3')),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: cm.primarySoft,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: cm.primary.withValues(alpha: 0.25)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.memory_rounded, size: 16, color: cm.primary),
-                const SizedBox(width: 8),
-                Text(
-                  '${language.t('home.engineReady')} · ${language.t('home.engineSub')}',
-                  style: tt.labelMedium?.copyWith(color: cm.primary, fontWeight: FontWeight.w700),
-                ),
-              ],
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -215,6 +177,129 @@ class _Hero extends StatelessWidget {
           style: context.tt.labelMedium?.copyWith(color: cm.inkSoft, fontWeight: FontWeight.w500),
         ),
       ],
+    );
+  }
+}
+
+/// Decorative hero artwork: an orbit field, a tilted board and the engine pill.
+class _HeroVisual extends StatelessWidget {
+  const _HeroVisual({required this.language});
+
+  final LanguageService language;
+
+  @override
+  Widget build(BuildContext context) {
+    final cm = context.cm;
+    final tt = context.tt;
+
+    return ExcludeSemantics(
+      child: SizedBox(
+        height: 300,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: 270,
+              height: 270,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: cm.primary.withValues(alpha: 0.18), width: 1.5),
+              ),
+            ),
+            Container(
+              width: 210,
+              height: 210,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: cm.primary.withValues(alpha: 0.14), width: 1.5),
+              ),
+            ),
+            Transform.rotate(
+              angle: -0.05,
+              child: Container(
+                width: 230,
+                height: 230,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [cm.primarySoft, cm.surface],
+                  ),
+                  border: Border.all(color: cm.line),
+                  boxShadow: CmShadow.lg(cm),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 22,
+                      right: 26,
+                      width: 86,
+                      child: SvgPicture.asset('assets/pieces/wn.svg'),
+                    ),
+                    Positioned(
+                      top: 100,
+                      left: 24,
+                      width: 78,
+                      child: SvgPicture.asset('assets/pieces/bk.svg'),
+                    ),
+                    Positioned(
+                      bottom: 20,
+                      right: 60,
+                      width: 64,
+                      child: SvgPicture.asset('assets/pieces/wp.svg'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              bottom: 14,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                decoration: BoxDecoration(
+                  color: cm.surface.withValues(alpha: 0.94),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: cm.line),
+                  boxShadow: CmShadow.md(cm),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 30,
+                      height: 30,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: cm.primarySoft,
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Icon(Icons.memory_rounded, size: 17, color: cm.primary),
+                    ),
+                    const SizedBox(width: 9),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          language.t('home.engineReady'),
+                          style: tt.labelMedium?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          language.t('home.engineSub'),
+                          style: tt.labelSmall?.copyWith(color: cm.muted),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -257,6 +342,81 @@ class _SectionHeading extends StatelessWidget {
         const SizedBox(height: 4),
         Text(copy, style: context.tt.bodyMedium?.copyWith(color: context.cm.muted, height: 1.5)),
       ],
+    );
+  }
+}
+
+class _ToolsGrid extends StatelessWidget {
+  const _ToolsGrid({required this.language});
+
+  final LanguageService language;
+
+  @override
+  Widget build(BuildContext context) {
+    final cards = [
+      _FeatureCard(
+        tone: 'blue',
+        icon: Icons.sports_esports_rounded,
+        tag: language.t('home.playTag'),
+        title: language.t('home.playTitle'),
+        text: language.t('home.playText'),
+        cta: language.t('home.playCta'),
+        meta: language.t('home.playMeta'),
+        primaryCta: true,
+        onTap: () => context.go(AppRoutes.play),
+      ),
+      _FeatureCard(
+        tone: 'gold',
+        icon: Icons.extension_rounded,
+        tag: language.t('home.puzzlesTag'),
+        title: language.t('home.puzzlesTitle'),
+        text: language.t('home.puzzlesText'),
+        cta: language.t('home.puzzlesCta'),
+        onTap: () => context.go(AppRoutes.puzzles),
+      ),
+      _FeatureCard(
+        tone: 'slate',
+        icon: Icons.auto_stories_rounded,
+        tag: language.t('home.openingsTag'),
+        title: language.t('home.openingsTitle'),
+        text: language.t('home.openingsText'),
+        cta: language.t('home.openingsCta'),
+        onTap: () => context.go(AppRoutes.openings),
+      ),
+      _FeatureCard(
+        tone: 'green',
+        icon: Icons.insights_rounded,
+        tag: language.t('home.reviewTag'),
+        title: language.t('home.reviewTitle'),
+        text: language.t('home.reviewText'),
+        cta: language.t('home.reviewCta'),
+        onTap: () => context.go(AppRoutes.analysis),
+      ),
+      _FeatureCard(
+        tone: 'slate',
+        icon: Icons.school_rounded,
+        tag: language.t('home.learnTag'),
+        title: language.t('home.learnTitle'),
+        text: language.t('home.learnText'),
+        cta: language.t('home.learnCta'),
+        onTap: () => context.go(AppRoutes.learn),
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final columns = width >= 1080 ? 3 : (width >= 640 ? 2 : 1);
+        const spacing = 12.0;
+        final cardWidth = (width - spacing * (columns - 1)) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final card in cards) SizedBox(width: cardWidth, child: card),
+          ],
+        );
+      },
     );
   }
 }

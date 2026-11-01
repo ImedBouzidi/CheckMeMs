@@ -6,15 +6,17 @@ import 'package:provider/provider.dart';
 import '../../core/i18n/language_service.dart';
 import '../../core/models/course.dart';
 import '../../core/models/game_history.dart';
-import '../../core/services/auth_service.dart';
-import '../../core/services/course_service.dart';
 import '../../core/services/game_history_service.dart';
+import '../../core/services/course_service.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/services/learning_progress_service.dart';
 import '../../core/services/move_analysis_api_service.dart';
 import '../../core/services/premium_service.dart';
 import '../../core/services/puzzle_progress_service.dart';
 import '../../routing/app_router.dart';
 import '../../ui/widgets/cm.dart';
+
+import '../../core/theme/app_theme.dart';
 
 /// Dashboard, mirroring `chess-web/src/app/features/dashboard/dashboard.component.ts`:
 /// KPI tiles, recent games with one-click engine review, course progress and
@@ -151,39 +153,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 16),
           ],
           // KPI tiles.
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.55,
-            children: [
-              CmStatCard(
-                icon: Icons.sports_esports_rounded,
-                value: '${stats.played}',
-                label: language.t('dashboard.stats.games'),
-                tone: 'blue',
-              ),
-              CmStatCard(
-                icon: Icons.emoji_events_rounded,
-                value: '${stats.winRate}%',
-                label: language.t('dashboard.stats.winRate'),
-                tone: 'gold',
-              ),
-              CmStatCard(
-                icon: Icons.local_fire_department_rounded,
-                value: '${puzzles.streak}',
-                label: language.t('dashboard.stats.puzzleStreak'),
-                tone: 'green',
-              ),
-              CmStatCard(
-                icon: Icons.school_rounded,
-                value: '$coursePercent%',
-                label: language.t('dashboard.stats.courseProgress'),
-                tone: 'slate',
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth >= 900;
+              return GridView.count(
+                crossAxisCount: wide ? 4 : 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: wide ? 1.9 : 1.55,
+                children: [
+                  CmStatCard(
+                    icon: Icons.sports_esports_rounded,
+                    value: '${stats.played}',
+                    label: language.t('dashboard.stats.games'),
+                    tone: 'blue',
+                  ),
+                  CmStatCard(
+                    icon: Icons.emoji_events_rounded,
+                    value: '${stats.winRate}%',
+                    label: language.t('dashboard.stats.winRate'),
+                    tone: 'gold',
+                  ),
+                  CmStatCard(
+                    icon: Icons.local_fire_department_rounded,
+                    value: '${puzzles.streak}',
+                    label: language.t('dashboard.stats.puzzleStreak'),
+                    tone: 'green',
+                  ),
+                  CmStatCard(
+                    icon: Icons.school_rounded,
+                    value: '$coursePercent%',
+                    label: language.t('dashboard.stats.courseProgress'),
+                    tone: 'slate',
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 14),
           Wrap(
@@ -295,7 +302,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: courses.courses.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                    separatorBuilder: (_, _) => const SizedBox(width: 10),
                     itemBuilder: (context, index) {
                       final course = courses.courses[index];
                       final refs = courses.lessonRefs(course);
@@ -696,7 +703,7 @@ class _CourseCard extends StatelessWidget {
                 if (locked)
                   Icon(Icons.lock_rounded, size: 16, color: cm.gold)
                 else
-                  CmTag('${percent}%', tone: course.accent, dense: true),
+                  CmTag('$percent%', tone: course.accent, dense: true),
               ],
             ),
             const SizedBox(height: 10),

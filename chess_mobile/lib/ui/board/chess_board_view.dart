@@ -6,6 +6,70 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/models/course.dart' show ArrowTone, BoardArrow;
 import 'board_theme.dart';
 
+/// Paint recipe for the legal-target markers of the selected piece.
+class BoardMarkers {
+  const BoardMarkers({
+    required this.moveColor,
+    required this.captureColor,
+    this.dotRadius = 0.16,
+    this.dotAlpha = 0.35,
+    this.ringAlpha = 0.35,
+    this.ringWidth = 0.09,
+    this.tintSquares = false,
+    this.tintAlpha = 0.25,
+    this.captureBevel = false,
+    this.pulseGain = 0,
+    this.pulseAlpha = 0,
+  });
+
+  final Color moveColor;
+  final Color captureColor;
+  final double dotRadius;
+  final double dotAlpha;
+  final double ringAlpha;
+  final double ringWidth;
+
+  /// Fills the whole square instead of drawing a dot (piece trainer).
+  final bool tintSquares;
+  final double tintAlpha;
+
+  /// Second, lighter ring inside a capture ring.
+  final bool captureBevel;
+
+  /// Extra radius and opacity added at the peak of the pulse.
+  final double pulseGain;
+  final double pulseAlpha;
+}
+
+/// Adult boards: static navy dots and rings.
+const BoardMarkers kClassicBoardMarkers =
+    BoardMarkers(moveColor: kTargetDotColor, captureColor: kTargetDotColor);
+
+/// Kids boards: pink dots and rings that breathe while it is the child's turn.
+const BoardMarkers kKidsBoardMarkers = BoardMarkers(
+  moveColor: kKidsPulseColor,
+  captureColor: kKidsPulseColor,
+  dotRadius: 0.18,
+  dotAlpha: 0.55,
+  ringAlpha: 0.7,
+  ringWidth: 0.11,
+  pulseGain: 0.35,
+  pulseAlpha: 0.3,
+);
+
+/// Piece trainer: every square the piece may go to is tinted, captures get a
+/// bevelled pink ring.
+const BoardMarkers kKidsLearnBoardMarkers = BoardMarkers(
+  moveColor: kKidsLearnMoveColor,
+  captureColor: kKidsLearnCaptureColor,
+  dotAlpha: 0.3,
+  ringAlpha: 0.75,
+  ringWidth: 0.10,
+  tintSquares: true,
+  tintAlpha: 0.22,
+  captureBevel: true,
+);
+
 /// Interactive chess board — the mobile counterpart of the web app's
 /// cm-chessboard (staunty pieces, green style, markers + arrows extensions).
 ///
@@ -26,7 +90,10 @@ class ChessBoardView extends StatefulWidget {
     this.checkSquare,
     this.extraHighlights = const [],
     this.arrows = const [],
-    this.theme = boardThemes.first,
+    this.theme = kDefaultBoardTheme,
+    this.markers = kClassicBoardMarkers,
+    this.pulseMarkers = false,
+    this.hintArrowColor = kHintArrowColor,
     this.showCoordinates = true,
     this.onSquareTap,
     this.onMoveAttempt,
@@ -63,6 +130,17 @@ class ChessBoardView extends StatefulWidget {
   final List<BoardArrow> arrows;
 
   final BoardTheme theme;
+
+  /// How legal-target markers are painted. Adults use [kClassicBoardMarkers];
+  /// kids mode passes a pink pulsing set, the piece trainer a tinted set.
+  final BoardMarkers markers;
+
+  /// Grows and fades the legal-target dots, like the kids board in the web app.
+  final bool pulseMarkers;
+
+  /// Color of [ArrowTone.defaultTone] arrows; kids mode uses orange.
+  final Color hintArrowColor;
+
   final bool showCoordinates;
 
   /// Tap anywhere on a square (selection handled by the screen).
@@ -81,11 +159,40 @@ class ChessBoardView extends StatefulWidget {
   State<ChessBoardView> createState() => _ChessBoardViewState();
 }
 
-class _ChessBoardViewState extends State<ChessBoardView> {
+class _ChessBoardViewState extends State<ChessBoardView> with SingleTickerProviderStateMixin {
   String? _dragFrom;
   Offset _dragOffset = Offset.zero;
+  AnimationController? _pulse;
 
   static const List<String> _files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.pulseMarkers) _startPulse();
+  }
+
+  @override
+  void didUpdateWidget(ChessBoardView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.pulseMarkers) {
+      _pulse?.dispose();
+      _pulse = null;
+      return;
+    }
+    if (_pulse == null) _startPulse();
+  }
+
+  void _startPulse() {
+    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 620))
+      ..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulse?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -113,6 +220,8 @@ class _ChessBoardViewState extends State<ChessBoardView> {
                     checkSquare: widget.checkSquare,
                     extraHighlights: widget.extraHighlights,
                     theme: widget.theme,
+                    markers: widget.markers,
+                    pulseAnimation: _pulse,
                     showCoordinates: widget.showCoordinates,
                     squareSize: squareSize,
                   ),
@@ -143,6 +252,9 @@ class _ChessBoardViewState extends State<ChessBoardView> {
                       arrows: widget.arrows,
                       orientationWhite: widget.orientationWhite,
                       squareSize: squareSize,
+                      hintColor: widget.hintArrowColor,
+                      pulseAnimation: _pulse,
+                      pulseGain: _pulse == null ? 0 : 0.45,
                     ),
                   ),
                 ),
@@ -296,9 +408,11 @@ class _BoardPainter extends CustomPainter {
     required this.checkSquare,
     required this.extraHighlights,
     required this.theme,
+    required this.markers,
+    required this.pulseAnimation,
     required this.showCoordinates,
     required this.squareSize,
-  });
+  }) : super(repaint: pulseAnimation);
 
   final String fen;
   final bool orientationWhite;
@@ -309,6 +423,11 @@ class _BoardPainter extends CustomPainter {
   final String? checkSquare;
   final List<String> extraHighlights;
   final BoardTheme theme;
+  final BoardMarkers markers;
+
+  /// 0..1 pulse phase; null when the markers stay static.
+  final Animation<double>? pulseAnimation;
+  double get pulse => pulseAnimation?.value ?? 0;
   final bool showCoordinates;
   final double squareSize;
 
@@ -359,21 +478,61 @@ class _BoardPainter extends CustomPainter {
         // Legal targets: dot for empty squares, ring for captures.
         if (legalTargets.contains(square)) {
           final center = Offset((col + 0.5) * squareSize, (row + 0.5) * squareSize);
-          if (occupancy[square] == null) {
+          final grow = 1 + markers.pulseGain * pulse;
+          final empty = occupancy[square] == null;
+          final color = empty ? markers.moveColor : markers.captureColor;
+          final alpha = (empty ? markers.dotAlpha : markers.ringAlpha) + markers.pulseAlpha * pulse;
+
+          if (markers.tintSquares) {
+            canvas.drawRect(
+              rect,
+              Paint()..color = color.withValues(alpha: markers.tintAlpha + markers.pulseAlpha * pulse),
+            );
+            if (!empty) {
+              canvas.drawCircle(
+                center,
+                squareSize * 0.42,
+                Paint()
+                  ..color = markers.captureColor.withValues(alpha: markers.ringAlpha)
+                  ..style = PaintingStyle.stroke
+                  ..strokeWidth = squareSize * markers.ringWidth,
+              );
+              if (markers.captureBevel) {
+                canvas.drawCircle(
+                  center,
+                  squareSize * 0.34,
+                  Paint()
+                    ..color = markers.captureColor.withValues(alpha: markers.ringAlpha * 0.45)
+                    ..style = PaintingStyle.stroke
+                    ..strokeWidth = squareSize * 0.035,
+                );
+              }
+            }
+          } else if (empty) {
             canvas.drawCircle(
               center,
-              squareSize * 0.16,
-              Paint()..color = kTargetDotColor.withValues(alpha: 0.35),
+              squareSize * markers.dotRadius * grow,
+              Paint()..color = color.withValues(alpha: alpha.clamp(0.0, 1.0)),
             );
           } else {
             canvas.drawCircle(
               center,
-              squareSize * 0.42,
+              squareSize * 0.42 * grow,
               Paint()
-                ..color = kTargetDotColor.withValues(alpha: 0.35)
+                ..color = color.withValues(alpha: alpha.clamp(0.0, 1.0))
                 ..style = PaintingStyle.stroke
-                ..strokeWidth = squareSize * 0.09,
+                ..strokeWidth = squareSize * markers.ringWidth,
             );
+            if (markers.captureBevel) {
+              canvas.drawCircle(
+                center,
+                squareSize * 0.34 * grow,
+                Paint()
+                  ..color = color.withValues(alpha: (alpha * 0.45).clamp(0.0, 1.0))
+                  ..style = PaintingStyle.stroke
+                  ..strokeWidth = squareSize * 0.035,
+              );
+            }
           }
         }
       }
@@ -442,12 +601,6 @@ class _BoardPainter extends CustomPainter {
     return occupancy;
   }
 
-  (int, int) _cellOf(String square) {
-    final file = _files.indexOf(square[0]);
-    final rank = int.parse(square.substring(1));
-    return orientationWhite ? (file, 8 - rank) : (7 - file, rank - 1);
-  }
-
   String _squareAt(int col, int row) {
     final file = _files[orientationWhite ? col : 7 - col];
     final rank = orientationWhite ? 8 - row : row + 1;
@@ -472,11 +625,19 @@ class _ArrowPainter extends CustomPainter {
     required this.arrows,
     required this.orientationWhite,
     required this.squareSize,
-  });
+    this.hintColor = kHintArrowColor,
+    this.pulseAnimation,
+    this.pulseGain = 0,
+  }) : super(repaint: pulseAnimation);
 
   final List<BoardArrow> arrows;
   final bool orientationWhite;
   final double squareSize;
+  final Color hintColor;
+
+  /// When set, the arrow fades and re-strengthens with the kids pulse beat.
+  final Animation<double>? pulseAnimation;
+  final double pulseGain;
 
   static const List<String> _files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
@@ -486,6 +647,7 @@ class _ArrowPainter extends CustomPainter {
       final from = _centerOf(arrow.from);
       final to = _centerOf(arrow.to);
       final color = _colorFor(arrow.tone);
+      final alpha = (0.85 - pulseGain * (1 - (pulseAnimation?.value ?? 1))).clamp(0.2, 1.0).toDouble();
 
       final direction = to - from;
       final distance = direction.distance;
@@ -497,7 +659,7 @@ class _ArrowPainter extends CustomPainter {
       final shaftEnd = to - unit * headLength;
 
       final shaftPaint = Paint()
-        ..color = color.withValues(alpha: 0.8)
+        ..color = color.withValues(alpha: alpha)
         ..strokeCap = StrokeCap.round
         ..strokeWidth = squareSize * 0.16;
       canvas.drawLine(from, shaftEnd, shaftPaint);
@@ -513,7 +675,7 @@ class _ArrowPainter extends CustomPainter {
         ..lineTo(shaftEnd.dx - perpendicular.dx * headWidth / 2,
             shaftEnd.dy - perpendicular.dy * headWidth / 2)
         ..close();
-      canvas.drawPath(path, Paint()..color = color.withValues(alpha: 0.8));
+      canvas.drawPath(path, Paint()..color = color.withValues(alpha: alpha));
     }
   }
 
@@ -523,7 +685,7 @@ class _ArrowPainter extends CustomPainter {
         ArrowTone.danger => const Color(0xFFEF4444),
         ArrowTone.info => const Color(0xFF3B82F6),
         ArrowTone.secondary => const Color(0xFF64748B),
-        _ => kHintArrowColor,
+        _ => hintColor,
       };
 
   Offset _centerOf(String square) {

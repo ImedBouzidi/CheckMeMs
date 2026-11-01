@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/i18n/language_service.dart';
+import '../../core/models/analysis.dart';
 import '../../core/models/engine.dart';
 import '../../core/models/game_history.dart';
 import '../../core/services/auth_service.dart';
@@ -15,12 +16,15 @@ import '../../core/services/game_history_service.dart';
 import '../../core/services/move_analysis_api_service.dart';
 import '../../core/services/sound_service.dart';
 import '../../core/services/stockfish_engine_service.dart';
+import '../../core/theme/app_theme.dart';
 import '../../routing/app_router.dart';
 import '../../ui/board/board_theme.dart';
 import '../../ui/board/chess_board_view.dart';
 import '../../ui/widgets/cm.dart';
+import '../../core/models/course.dart' show ArrowTone, BoardArrow;
 import 'game_utils.dart';
-import '../play/play_screen.dart' show BotGameSetup;
+import '../play/play_screen.dart' show showBotSetupDialog;
+
 
 /// Play against Stockfish, mirroring the web `game-vs-bot.component.ts`:
 /// clocks, captured material, eval bar, move list, promotion, resign / takeback
@@ -57,7 +61,6 @@ class _GameVsBotScreenState extends State<GameVsBotScreen> {
   bool _botMoveInProgress = false;
 
   final List<Map<String, dynamic>> _moveHistory = [];
-  int _takebackFloor = 0;
 
   // Promotion.
   ({String from, String to})? _pendingPromotion;
@@ -79,7 +82,7 @@ class _GameVsBotScreenState extends State<GameVsBotScreen> {
   EngineEvaluation? _evaluation;
 
   // Board appearance.
-  BoardTheme _boardTheme = boardThemes.first;
+  final BoardTheme _boardTheme = boardThemes.first;
   bool _orientationWhite = true;
 
   // Game over.
@@ -96,7 +99,6 @@ class _GameVsBotScreenState extends State<GameVsBotScreen> {
   final String _liveAnalysisGameId = _uuid();
 
   static String _uuid() {
-    final rand = List.generate(32, (_) => '0123456789abcdef'.hashCode);
     return 'game-${DateTime.now().millisecondsSinceEpoch}';
   }
 
@@ -288,13 +290,14 @@ class _GameVsBotScreenState extends State<GameVsBotScreen> {
     final ok = _game.move({
       'from': from,
       'to': to,
-      if (promotion != null) 'promotion': promotion,
+      'promotion': ?promotion,
     });
     if (!ok) return;
 
     final history = _game.history;
+    final sanMoves = _game.san_moves();
+    final san = sanMoves.isNotEmpty ? (sanMoves.last ?? '') : '';
     final last = history.isNotEmpty ? history.last.move : null;
-    final san = last != null ? _game.history_san(history) : '';
     final moveColor = _game.turn == chess_lib.Color.WHITE ? 'black' : 'white';
 
     setState(() {
@@ -303,7 +306,6 @@ class _GameVsBotScreenState extends State<GameVsBotScreen> {
       _lastMoveFrom = from;
       _lastMoveTo = to;
       _pendingPromotion = null;
-      if (_moveHistory.isEmpty) _takebackFloor = 0;
     });
 
     _applyIncrement(moveColor == 'white' ? chess_lib.Color.WHITE : chess_lib.Color.BLACK);
@@ -395,7 +397,7 @@ class _GameVsBotScreenState extends State<GameVsBotScreen> {
     final ok = _game.move({
       'from': from,
       'to': to,
-      if (promotion != null) 'promotion': promotion,
+      'promotion': ?promotion,
     });
     if (!ok) {
       setState(() => _botThinking = false);
@@ -403,8 +405,9 @@ class _GameVsBotScreenState extends State<GameVsBotScreen> {
     }
 
     final history = _game.history;
+    final sanMoves = _game.san_moves();
+    final san = sanMoves.isNotEmpty ? (sanMoves.last ?? '') : '';
     final last = history.isNotEmpty ? history.last.move : null;
-    final san = last != null ? _game.history_san(history) : '';
     final isCapture = last != null && last.captured != null;
 
     setState(() {
@@ -503,9 +506,8 @@ class _GameVsBotScreenState extends State<GameVsBotScreen> {
     });
 
     try {
-      LiveFinalizeResponse? finalize;
       try {
-        finalize = await api.finalizeLive(_liveAnalysisGameId, _moveHistory.length, pgn);
+        await api.finalizeLive(_liveAnalysisGameId, _moveHistory.length, pgn);
       } catch (_) {
         // No live job (played signed out): submit the whole PGN instead.
         final submitted = await api.submit(pgn, _liveAnalysisGameId);
@@ -555,9 +557,6 @@ class _GameVsBotScreenState extends State<GameVsBotScreen> {
     while (undone < 2 && _game.history.isNotEmpty) {
       _game.undo_move();
       undone += 1;
-    }
-    if (_moveHistory.length >= undone) {
-      _moveHistory.sublist(0);
     }
     for (var i = 0; i < undone && _moveHistory.isNotEmpty; i++) {
       _moveHistory.removeLast();
@@ -641,7 +640,6 @@ class _GameVsBotScreenState extends State<GameVsBotScreen> {
       _botMoveInProgress = false;
       _evaluation = null;
       _currentGameId = null;
-      _takebackFloor = 0;
       _initClocks();
     });
     final engine = context.read<StockfishEngineService>();
@@ -806,7 +804,7 @@ class _GameVsBotScreenState extends State<GameVsBotScreen> {
                       _headerChip(
                         _playerColor == 'white' ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
                         language.t('bot.playingAs', {
-                          'color': language.t('bot.${_playerColor}'),
+                          'color': language.t('bot.$_playerColor'),
                         }),
                         cm,
                         tt,
@@ -897,7 +895,6 @@ class _GameVsBotScreenState extends State<GameVsBotScreen> {
     String? checkSquare,
     bool userIsWhite,
   ) {
-    final topIsUser = !_orientationWhite; // black-on-top when white orientation
     final botIsWhite = !userIsWhite;
 
     return Padding(
@@ -1262,7 +1259,7 @@ class _GameVsBotScreenState extends State<GameVsBotScreen> {
       });
       if (!ok) break;
       final history = scratch.history;
-      if (history.isNotEmpty) sans.add(history.last.move.san);
+      if (history.isNotEmpty) sans.add(scratch.move_to_san(history.last.move));
     }
     return sans.join(' ');
   }

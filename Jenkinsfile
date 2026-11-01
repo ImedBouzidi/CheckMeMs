@@ -56,7 +56,9 @@ pipeline {
             when { expression { params.RUN_TESTS } }
             steps {
                 sh '''
-                    docker compose up -d --wait \
+                    # CI only needs Keycloak over the Compose network. Let Docker
+                    # choose an ephemeral host port to avoid collisions on agents.
+                    KEYCLOAK_HOST_PORT=0 docker compose up -d --wait \
                         postgres redis rabbitmq kafka eureka-server keycloak
                 '''
             }

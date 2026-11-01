@@ -9,29 +9,20 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  # Material widgets localized for the four product languages (incl. RTL Arabic).
   flutter_localizations:
     sdk: flutter
-
   cupertino_icons: ^1.0.8
-  # State management (ChangeNotifier singletons, mirroring the web app's services).
   provider: ^6.1.5
-  # Navigation with route guards, mirroring the Angular router table.
   go_router: ^18.1.2
-  # HTTP client for the API gateway (auth, games, analysis).
   http: ^1.6.0
-  # Device-local storage, the counterpart of the web app's localStorage.
   shared_preferences: ^2.5.6
-  # Chess rules engine (FEN/PGN/SAN, move generation) — the chess.js counterpart.
+  jwt_decoder: ^2.0.1
   chess: ^0.8.1
-  # Stockfish UCI engine, mirroring the web app's WASM Stockfish worker.
   stockfish: ^1.8.1
-  # Move / capture / check / game-over sounds (synthesised from the web app's WebAudio tones).
   audioplayers: ^6.8.1
-  # Staunty piece rendering (the same piece set the web board uses).
   flutter_svg: ^2.3.2
-  # Date formatting for the games list.
   intl: ^0.20.3
+  flutter_tts: ^4.2.5
 
 dev_dependencies:
   flutter_test:
@@ -43,3 +34,4 @@ flutter:
   assets:
     - assets/pieces/
     - assets/sounds/
+    - assets/logo/

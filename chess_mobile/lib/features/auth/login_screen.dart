@@ -8,6 +8,9 @@ import '../../routing/app_router.dart';
 import '../../ui/widgets/auth_showcase.dart';
 import '../../ui/widgets/cm.dart';
 
+import '../../core/theme/app_theme.dart';
+
+
 /// Login screen, mirroring
 /// `chess-web/src/app/features/auth/login/login.component.ts`.
 class LoginScreen extends StatefulWidget {

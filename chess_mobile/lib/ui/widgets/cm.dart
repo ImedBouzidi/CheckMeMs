@@ -13,7 +13,6 @@ class CmPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cm = context.cm;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: const Duration(milliseconds: 350),
@@ -133,7 +132,7 @@ class CmSectionHeader extends StatelessWidget {
                   style: tt.headlineSmall?.copyWith(fontWeight: FontWeight.w700, height: 1.2),
                 ),
               ),
-              if (actions != null) actions!,
+              ?actions,
             ],
           ),
           if (copy != null) ...[
@@ -281,7 +280,7 @@ class CmPrimaryButton extends StatelessWidget {
                           size: small ? 15 : 19,
                           color: enabled ? Colors.white : cm.mutedLight,
                         ),
-                        const SizedBox(width: small ? 5 : 8),
+                        SizedBox(width: small ? 5 : 8),
                       ],
                       Text(
                         label,

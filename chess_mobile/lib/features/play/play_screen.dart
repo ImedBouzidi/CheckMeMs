@@ -7,6 +7,8 @@ import '../../core/models/engine.dart';
 import '../../routing/app_router.dart';
 import '../../ui/widgets/cm.dart';
 
+import '../../core/theme/app_theme.dart';
+
 /// Options chosen in the "Play vs Stockfish" dialog.
 class BotGameSetup {
   const BotGameSetup({

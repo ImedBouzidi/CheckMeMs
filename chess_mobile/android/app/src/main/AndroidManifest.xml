@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The app talks to the API gateway (auth, games, analysis). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="chess_mobile"
         android:name="${applicationName}"

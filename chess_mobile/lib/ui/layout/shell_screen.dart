@@ -23,73 +23,57 @@ class ShellScreen extends StatelessWidget {
     final auth = context.watch<AuthService>();
     final language = context.watch<LanguageService>();
     final location = GoRouterState.of(context).uri.path;
+    // The web toolbar is wide; phones only keep the essentials and fold the
+    // Kids pill / auth links into compact controls.
+    final compact = MediaQuery.sizeOf(context).width < 720;
 
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 4,
         title: const _Brand(),
         actions: [
-          // Kids Mode pill.
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 2),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(999),
-                onTap: () => context.go('/kids'),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFBBF24).withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: const Color(0xFFFBBF24).withValues(alpha: 0.6)),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('🧒', style: TextStyle(fontSize: 13)),
-                      SizedBox(width: 6),
-                      Text(
-                        'Kids Mode',
-                        style: TextStyle(
-                          color: Color(0xFFFDE68A),
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+          if (compact)
+            IconButton(
+              tooltip: language.t('nav.kids'),
+              icon: const Icon(Icons.child_care_rounded, size: 22),
+              onPressed: () => context.go('/kids'),
+            )
+          else
+            const _KidsPill(),
           // Language menu.
           _LanguageMenu(language: language),
           // Theme toggle.
           IconButton(
-            tooltip: language.t('nav.themeToDark'),
-            icon: Icon(context.watch<ThemeService>().isDark ? Icons.light_mode : Icons.dark_mode,
-                size: 21),
+            tooltip: context.watch<ThemeService>().isDark
+                ? language.t('nav.themeToLight')
+                : language.t('nav.themeToDark'),
+            icon: Icon(
+              context.watch<ThemeService>().isDark ? Icons.light_mode : Icons.dark_mode,
+              size: 21,
+            ),
             onPressed: () => context.read<ThemeService>().toggle(),
           ),
           if (auth.isAuthenticated)
             _AccountMenu(auth: auth, language: language)
-          else
+          else if (compact)
+            _GuestMenu(language: language)
+          else ...[
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
               child: TextButton(
                 onPressed: () => context.go('/auth/login'),
                 child: Text(language.t('nav.login')),
               ),
             ),
-          if (!auth.isAuthenticated)
             Padding(
               padding: const EdgeInsets.only(right: 12, top: 10, bottom: 10),
               child: CmPrimaryButton(
+                small: true,
                 label: language.t('nav.signup'),
                 onPressed: () => context.go('/auth/register'),
               ),
             ),
+          ],
         ],
       ),
       drawer: _AppDrawer(location: location),
@@ -108,7 +92,6 @@ class _Brand extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final language = context.watch<LanguageService>();
     return GestureDetector(
       onTap: () => context.go('/'),
       child: Row(
@@ -135,6 +118,87 @@ class _Brand extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _KidsPill extends StatelessWidget {
+  const _KidsPill();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 2),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: () => context.go('/kids'),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFBBF24).withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: const Color(0xFFFBBF24).withValues(alpha: 0.6)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('🧒', style: TextStyle(fontSize: 13)),
+                SizedBox(width: 6),
+                Text(
+                  'Kids Mode',
+                  style: TextStyle(
+                    color: Color(0xFFFDE68A),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact guest menu used on narrow phones where the two auth buttons don't
+/// fit in the toolbar.
+class _GuestMenu extends StatelessWidget {
+  const _GuestMenu({required this.language});
+
+  final LanguageService language;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      tooltip: language.t('nav.login'),
+      icon: const Icon(Icons.person_outline_rounded, size: 22),
+      onSelected: (value) {
+        if (value == 'login') context.go('/auth/login');
+        if (value == 'signup') context.go('/auth/register');
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem<String>(
+          value: 'login',
+          child: ListTile(
+            leading: const Icon(Icons.login_rounded, size: 20),
+            title: Text(language.t('nav.login')),
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'signup',
+          child: ListTile(
+            leading: const Icon(Icons.person_add_alt_1_rounded, size: 20),
+            title: Text(language.t('nav.signup')),
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -318,7 +382,7 @@ class _AppDrawer extends StatelessWidget {
               duration: const Duration(milliseconds: 180),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
-                gradient: active
+                gradient: active && !cm.isDark
                     ? const LinearGradient(
                         colors: [Color(0xFFE8F1FF), Color(0xFFF3F8FF)],
                       )
@@ -404,6 +468,17 @@ class _AppDrawer extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).pop();
                     context.go('/auth/login');
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 6, 14, 4),
+                child: CmSecondaryButton(
+                  label: language.t('nav.signup'),
+                  expanded: true,
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    context.go('/auth/register');
                   },
                 ),
               ),

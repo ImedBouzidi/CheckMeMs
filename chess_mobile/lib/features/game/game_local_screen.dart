@@ -9,7 +9,10 @@ import '../../routing/app_router.dart';
 import '../../ui/board/board_theme.dart';
 import '../../ui/board/chess_board_view.dart';
 import '../../ui/widgets/cm.dart';
+
+import '../../core/theme/app_theme.dart';
 import 'game_utils.dart';
+
 
 /// Pass-and-play local board, mirroring the web local-game feature.
 class GameLocalScreen extends StatefulWidget {
@@ -84,12 +87,12 @@ class _GameLocalScreenState extends State<GameLocalScreen> {
     final ok = _game.move({
       'from': from,
       'to': to,
-      if (promotion != null) 'promotion': promotion,
+      'promotion': ?promotion,
     });
     if (!ok) return;
     final history = _game.history;
     setState(() {
-      if (history.isNotEmpty) _sans.add(history.last.move.san);
+      if (history.isNotEmpty) _sans.add(_game.move_to_san(history.last.move));
       _selectedSquare = null;
       _legalTargets = {};
       _lastMoveFrom = from;
