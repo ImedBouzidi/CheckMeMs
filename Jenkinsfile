@@ -56,10 +56,23 @@ pipeline {
             when { expression { params.RUN_TESTS } }
             steps {
                 sh '''
+                    # Start PostgreSQL before Keycloak so this remains safe when
+                    # Jenkins reuses a pgdata volume created by an older build.
+                    docker compose up -d --wait \
+                        postgres redis rabbitmq kafka eureka-server
+
+                    if ! docker compose exec -T postgres \
+                        psql -U chess_user -d postgres -tAc \
+                        "SELECT 1 FROM pg_database WHERE datname = 'keycloak'" |
+                        grep -q 1; then
+                        docker compose exec -T postgres \
+                            psql -U chess_user -d postgres -v ON_ERROR_STOP=1 \
+                            -c 'CREATE DATABASE "keycloak" OWNER "chess_user";'
+                    fi
+
                     # CI only needs Keycloak over the Compose network. Let Docker
                     # choose an ephemeral host port to avoid collisions on agents.
-                    KEYCLOAK_HOST_PORT=0 docker compose up -d --wait \
-                        postgres redis rabbitmq kafka eureka-server keycloak
+                    KEYCLOAK_HOST_PORT=0 docker compose up -d --wait keycloak
                 '''
             }
         }

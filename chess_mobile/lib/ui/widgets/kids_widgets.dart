@@ -46,6 +46,10 @@ const List<Color> kKidWorldColors = [
 
 /// Full-screen kids world: animated pastel gradient with drifting pieces,
 /// rising bubbles and twinkling stars behind scrolling content.
+
+/// Which floating decorations a kids page uses, matching the three `*-sky`
+/// blocks of the web kids pages.
+enum KidWorldDecor { home, play, learn }
 class KidsWorld extends StatefulWidget {
   const KidsWorld({
     super.key,
@@ -64,9 +68,6 @@ class KidsWorld extends StatefulWidget {
   State<KidsWorld> createState() => _KidsWorldState();
 }
 
-/// Which floating decorations a kids page uses, matching the three `*-sky`
-/// blocks of the web kids pages.
-enum KidWorldDecor { home, play, learn }
 
 class _KidsWorldState extends State<KidsWorld> with SingleTickerProviderStateMixin {
   /// One master clock; every decorative element divides it into its own speed,
