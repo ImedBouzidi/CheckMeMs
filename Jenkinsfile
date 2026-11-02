@@ -84,6 +84,9 @@ pipeline {
                 stage('Java services') {
                     agent {
                         docker {
+                            // Jenkins runs agent containers as the host uid (123:125),
+                            // where HOME=/ and Maven therefore tries to use /.m2.
+                            // Run as root so the /root/.m2 cache volume below is writable.
                             image 'maven:3.9-eclipse-temurin-21'
                             args '''--network checkmems_chess-net
                                 -e SPRING_PROFILES_ACTIVE=docker
@@ -102,6 +105,7 @@ pipeline {
                                 -e TEST_DB_URL=jdbc:postgresql://postgres:5432/chess_analysis-service
                                 -e TEST_DB_USER=chess_user
                                 -e TEST_DB_PASSWORD=chess_pass
+                                -u root
                                 -v maven-cache:/root/.m2'''
                         }
                     }
