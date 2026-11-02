@@ -218,8 +218,8 @@ services:
   move-analysis-service:
     # Builds Stockfish from ../stockfish in an extra context (see Dockerfile header).
     build:
-      context: .
-      dockerfile: move-analysis-service/Dockerfile
+      context: ./move-analysis-service
+      dockerfile: Dockerfile
       additional_contexts:
         - "stockfish=./stockfish"
     image: checkmems/move-analysis-service:latest

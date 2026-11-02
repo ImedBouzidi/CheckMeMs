@@ -7,11 +7,12 @@
 #
 # Stage 1 is x86-64 only; on ARM (Apple Silicon) use binaries for the target platform or
 # change ARCH (see https://github.com/official-stockfish/Stockfish).
-FROM debian:bookworm-slim AS stockfish
+FROM debian:bookworm-slim AS stockfish-build
 RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*
-COPY --from=stockfish src /build
+COPY --from=stockfish src /build/src
+COPY --from=stockfish scripts /build/scripts
 WORKDIR /build/src
 # The first build downloads the default NNUE nets (needs network access).
 RUN make -j4 net && make -j4 build ARCH=x86-64
@@ -27,7 +28,7 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 COPY --from=build /app/target/*.jar app.jar
-COPY --from=stockfish /build/src/stockfish /usr/bin/stockfish
+COPY --from=stockfish-build /build/src/stockfish /usr/bin/stockfish
 # Config default in application-docker.yml
 ENV STOCKFISH_PATH=/usr/bin/stockfish
 EXPOSE 8082
