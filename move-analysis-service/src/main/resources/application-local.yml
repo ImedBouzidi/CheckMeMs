@@ -25,11 +25,6 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
 
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
@@ -86,7 +81,6 @@ analysis:
     consumer-enabled: true
     finalize-wait-ms: 5000
     finalize-poll-ms: 100
-    eval-ttl: 2h
   worker:
     enabled: ${ANALYSIS_WORKER_ENABLED:true}
     concurrency: ${ANALYSIS_WORKER_CONCURRENCY:1}

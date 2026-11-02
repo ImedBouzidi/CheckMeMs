@@ -29,8 +29,6 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -49,8 +47,7 @@ class LiveAnalysisServiceTest {
     private final AnalysisQueue queue = mock(AnalysisQueue.class);
     private final AnalysisRunner runner = mock(AnalysisRunner.class);
     private final AnalysisMetrics metrics = mock(AnalysisMetrics.class);
-    private final EvalCache evalCache = new EvalCache(new ObjectMapper(), new LiveAnalysisProperties(),
-            metrics, emptyRedisProvider());
+    private final EvalCache evalCache = new EvalCache(metrics);
     private final LiveAnalysisProperties properties = new LiveAnalysisProperties();
     private final UUID gameId = UUID.randomUUID();
 
@@ -242,13 +239,5 @@ class LiveAnalysisServiceTest {
             public void rollback(TransactionStatus status) {
             }
         };
-    }
-
-    /** No Redis in unit tests: the in-process fallback covers the progress bookkeeping. */
-    @SuppressWarnings("unchecked")
-    private static ObjectProvider<StringRedisTemplate> emptyRedisProvider() {
-        ObjectProvider<StringRedisTemplate> provider = mock(ObjectProvider.class);
-        when(provider.getIfAvailable()).thenReturn(null);
-        return provider;
     }
 }

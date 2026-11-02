@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import imed.moveanalysisservice.chess.ChessBoard;
 import imed.moveanalysisservice.chess.PgnReplay;
 import imed.moveanalysisservice.chess.SanCodec;
-import imed.moveanalysisservice.config.LiveAnalysisProperties;
 import imed.moveanalysisservice.config.StockfishConfig;
 import imed.moveanalysisservice.dto.request.LiveMoveAnalysisRequest;
 import imed.moveanalysisservice.engine.EngineEvaluation;
@@ -23,8 +22,6 @@ import imed.moveanalysisservice.engine.StockfishPool;
 import imed.moveanalysisservice.engine.StockfishProcess;
 import imed.moveanalysisservice.engine.StockfishProcess;
 import imed.moveanalysisservice.metrics.AnalysisMetrics;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import imed.moveanalysisservice.model.AnalysisJobType;
 import imed.moveanalysisservice.model.AnalysisStatus;
 import imed.moveanalysisservice.model.GameAnalysis;
@@ -53,8 +50,7 @@ class AnalysisRunnerTest {
     private final StockfishProcess engine = mock(StockfishProcess.class);
     private final AnalysisQueue queue = mock(AnalysisQueue.class);
     private final AnalysisMetrics metrics = mock(AnalysisMetrics.class);
-    private final EvalCache evalCache = new EvalCache(new ObjectMapper(), new LiveAnalysisProperties(),
-            metrics, emptyRedisProvider());
+    private final EvalCache evalCache = new EvalCache(metrics);
     private final StockfishConfig config = new StockfishConfig();
     private final UUID analysisId = UUID.randomUUID();
     private final UUID gameId = UUID.randomUUID();
@@ -292,14 +288,6 @@ class AnalysisRunnerTest {
     private AnalysisQueue.ClaimedJob job() {
         return new AnalysisQueue.ClaimedJob(UUID.randomUUID(), analysisId, AnalysisJobType.GAME,
                 1, 3, OffsetDateTime.now(), "worker-test");
-    }
-
-    /** No Redis in unit tests, so the runner still exercises the bounded in-process cache layer. */
-    @SuppressWarnings("unchecked")
-    private static ObjectProvider<StringRedisTemplate> emptyRedisProvider() {
-        ObjectProvider<StringRedisTemplate> provider = mock(ObjectProvider.class);
-        when(provider.getIfAvailable()).thenReturn(null);
-        return provider;
     }
 
     private List<MoveAnalysis> captureRows(int expected) {

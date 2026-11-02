@@ -9,7 +9,7 @@
 #   http://localhost:8761  Eureka console
 #   :8082 kill analysis :8083 games :8084 profiles :8088 kafka-service :8091 learning (direct)
 #
-# Internal-only (no host port): postgres 5432, redis 6379, kafka 29092(+29093).
+# Internal-only (no host port): postgres 5432, kafka 29092(+29093).
 # They never collide with the local dev instances that share the same defaults.
 #
 # Token validation quirk (see below *keycloak-env): Keycloak advertises iss=http://localhost:8080
@@ -28,8 +28,6 @@ x-db-env: &db-env
   DB_PORT: 5432
   DB_USERNAME: chess_user
   DB_PASSWORD: ${POSTGRES_PASSWORD:-chess_pass}
-  REDIS_HOST: redis
-  REDIS_PORT: 6379
   EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
 
 x-keycloak-env: &keycloak-env
@@ -60,16 +58,6 @@ services:
       - ./docker/postgres-init-multiple-dbs.sql:/docker-entrypoint-initdb.d/10-multiple-dbs.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U chess_user -d chess_user_profile"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-    networks: [chess-net]
-
-  redis:
-    image: redis:7-alpine
-    command: ["redis-server", "--save", "", "--appendonly", "no"]
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -179,7 +167,6 @@ services:
     restart: unless-stopped
     depends_on:
       postgres: { condition: service_healthy }
-      redis: { condition: service_healthy }
       eureka-server: { condition: service_healthy }
       keycloak: { condition: service_healthy }
     networks: [chess-net]
@@ -207,7 +194,6 @@ services:
     restart: unless-stopped
     depends_on:
       postgres: { condition: service_healthy }
-      redis: { condition: service_healthy }
       eureka-server: { condition: service_healthy }
       keycloak: { condition: service_healthy }
     networks: [chess-net]
@@ -225,7 +211,6 @@ services:
     restart: unless-stopped
     depends_on:
       postgres: { condition: service_healthy }
-      redis: { condition: service_healthy }
       eureka-server: { condition: service_healthy }
       keycloak: { condition: service_healthy }
     networks: [chess-net]
@@ -255,7 +240,6 @@ services:
     restart: unless-stopped
     depends_on:
       postgres: { condition: service_healthy }
-      redis: { condition: service_healthy }
       kafka: { condition: service_healthy }
       eureka-server: { condition: service_healthy }
       keycloak: { condition: service_healthy }
