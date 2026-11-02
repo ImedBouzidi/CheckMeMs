@@ -61,14 +61,20 @@ pipeline {
                     docker compose up -d --wait \
                         postgres redis rabbitmq kafka eureka-server
 
-                    if ! docker compose exec -T postgres \
-                        psql -U chess_user -d postgres -tAc \
-                        "SELECT 1 FROM pg_database WHERE datname = 'keycloak'" |
-                        grep -q 1; then
-                        docker compose exec -T postgres \
-                            psql -U chess_user -d postgres -v ON_ERROR_STOP=1 \
-                            -c 'CREATE DATABASE "keycloak" OWNER "chess_user";'
-                    fi
+                    # The PostgreSQL init script only runs on an empty pgdata
+                    # volume. Create any databases missing from a reused volume
+                    # before the service tests connect to them.
+                    for db in chess_game chess_user_profile \
+                              chess_learning-service chess_analysis-service keycloak; do
+                        if ! docker compose exec -T postgres \
+                            psql -U chess_user -d postgres -tAc \
+                            "SELECT 1 FROM pg_database WHERE datname = '$db'" |
+                            grep -q 1; then
+                            docker compose exec -T postgres \
+                                psql -U chess_user -d postgres -v ON_ERROR_STOP=1 \
+                                -c "CREATE DATABASE \"$db\" OWNER \"chess_user\";"
+                        fi
+                    done
 
                     # CI only needs Keycloak over the Compose network. Let Docker
                     # choose an ephemeral host port to avoid collisions on agents.
@@ -102,6 +108,14 @@ pipeline {
                                 -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
                                 -e OAUTH2_ISSUER_URI=http://keycloak:8080/realms/chess-platform
                                 -e OAUTH2_JWK_SET_URI=http://keycloak:8080/realms/chess-platform/protocol/openid-connect/certs
+                                -e KEYCLOAK_AUTH_SERVER_URL=http://keycloak:8080
+                                -e KEYCLOAK_REALM=chess-platform
+                                -e KEYCLOAK_RESOURCE=user-profile-service
+                                -e KEYCLOAK_LOGIN_CLIENT_ID=chess-web
+                                -e KEYCLOAK_ADMIN_CLIENT_ID=admin-cli
+                                -e KEYCLOAK_ADMIN_USERNAME=admin
+                                -e KEYCLOAK_ADMIN_PASSWORD=admin
+                                -e KEYCLOAK_USER_PROFILE_CLIENT_SECRET=WYs5nX2LrnlaQPkH4Hmy4LWqNCYVaIWP
                                 -e TEST_DB_URL=jdbc:postgresql://postgres:5432/chess_analysis-service
                                 -e TEST_DB_USER=chess_user
                                 -e TEST_DB_PASSWORD=chess_pass
@@ -120,7 +134,14 @@ pipeline {
                             env.JAVA_SERVICE_NAMES.split(' ').each { svc ->
                                 dir(svc) {
                                     echo "Unit tests: ${svc}"
-                                    withEnv(["DB_NAME=${databaseNames.get(svc, '')}"]) {
+                                    def testEnv = ["DB_NAME=${databaseNames.get(svc, '')}"]
+                                    if (svc == 'games-service' || svc == 'user-profile-service') {
+                                        // No Flyway migrations exist for these services, but
+                                        // the docker profile uses ddl-auto=validate. Let
+                                        // Hibernate create the schema for the CI database.
+                                        testEnv.add('SPRING_JPA_HIBERNATE_DDL_AUTO=update')
+                                    }
+                                    withEnv(testEnv) {
                                         sh 'mvn -B test'
                                     }
                                 }
