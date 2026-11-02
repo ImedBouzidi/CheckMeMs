@@ -61,20 +61,49 @@ pipeline {
                     docker compose up -d --wait \
                         postgres redis rabbitmq kafka eureka-server
 
+                    # The compose postgres superuser is chess_user, while the
+                    # service .env files use imed/admin. Create that role and
+                    # make the service databases owned by it.
+                    if ! docker compose exec -T postgres \
+                        psql -U chess_user -d postgres -tAc \
+                        "SELECT 1 FROM pg_roles WHERE rolname = 'imed'" |
+                        grep -q 1; then
+                        docker compose exec -T postgres \
+                            psql -U chess_user -d postgres -v ON_ERROR_STOP=1 \
+                            -c "CREATE ROLE imed LOGIN PASSWORD 'admin' CREATEDB;"
+                    else
+                        docker compose exec -T postgres \
+                            psql -U chess_user -d postgres -v ON_ERROR_STOP=1 \
+                            -c "ALTER ROLE imed WITH LOGIN PASSWORD 'admin' CREATEDB;"
+                    fi
+
                     # The PostgreSQL init script only runs on an empty pgdata
-                    # volume. Create any databases missing from a reused volume
-                    # before the service tests connect to them.
+                    # volume, so create or re-own databases when Jenkins reuses
+                    # one. Use createdb/printf instead of SQL with quoted names:
+                    # Groovy consumes the backslashes needed by CREATE DATABASE.
                     for db in chess_game chess_user_profile \
-                              chess_learning-service chess_analysis-service keycloak; do
+                              chess_learning-service chess_analysis-service; do
                         if ! docker compose exec -T postgres \
                             psql -U chess_user -d postgres -tAc \
                             "SELECT 1 FROM pg_database WHERE datname = '$db'" |
                             grep -q 1; then
                             docker compose exec -T postgres \
-                                psql -U chess_user -d postgres -v ON_ERROR_STOP=1 \
-                                -c "CREATE DATABASE \"$db\" OWNER \"chess_user\";"
+                                createdb -U chess_user -O imed "$db"
+                        else
+                            printf 'ALTER DATABASE "%s" OWNER TO imed;' "$db" |
+                                docker compose exec -T postgres \
+                                    psql -U chess_user -d postgres -v ON_ERROR_STOP=1
                         fi
                     done
+
+                    # Keycloak keeps using the compose superuser.
+                    if ! docker compose exec -T postgres \
+                        psql -U chess_user -d postgres -tAc \
+                        "SELECT 1 FROM pg_database WHERE datname = 'keycloak'" |
+                        grep -q 1; then
+                        docker compose exec -T postgres \
+                            createdb -U chess_user -O chess_user keycloak
+                    fi
 
                     # CI only needs Keycloak over the Compose network. Let Docker
                     # choose an ephemeral host port to avoid collisions on agents.
@@ -97,8 +126,8 @@ pipeline {
                             args '''--network checkmems_chess-net
                                 -e SPRING_PROFILES_ACTIVE=docker
                                 -e DB_HOST=postgres
-                                -e DB_USERNAME=chess_user
-                                -e DB_PASSWORD=chess_pass
+                                -e DB_USERNAME=imed
+                                -e DB_PASSWORD=admin
                                 -e SERVER_PORT=0
                                 -e REDIS_HOST=redis
                                 -e RABBITMQ_HOST=rabbitmq
@@ -117,8 +146,8 @@ pipeline {
                                 -e KEYCLOAK_ADMIN_PASSWORD=admin
                                 -e KEYCLOAK_USER_PROFILE_CLIENT_SECRET=WYs5nX2LrnlaQPkH4Hmy4LWqNCYVaIWP
                                 -e TEST_DB_URL=jdbc:postgresql://postgres:5432/chess_analysis-service
-                                -e TEST_DB_USER=chess_user
-                                -e TEST_DB_PASSWORD=chess_pass
+                                -e TEST_DB_USER=imed
+                                -e TEST_DB_PASSWORD=admin
                                 -u root
                                 -v maven-cache:/root/.m2'''
                         }
