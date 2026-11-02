@@ -38,13 +38,6 @@
             <artifactId>spring-kafka</artifactId>
         </dependency>
 
-        <!-- Shared Kafka plumbing (topic name constants) -->
-        <dependency>
-            <groupId>tn.iteam</groupId>
-            <artifactId>common-kafka</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-
         <!-- Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

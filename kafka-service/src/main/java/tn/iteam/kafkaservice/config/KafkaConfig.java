@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
-import tn.iteam.common.kafka.Topics;
+import tn.iteam.kafkaservice.kafka.Topics;
 
 /**
  * Single registry of every topic in the platform.

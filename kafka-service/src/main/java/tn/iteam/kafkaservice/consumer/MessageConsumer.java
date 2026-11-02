@@ -2,7 +2,7 @@ package tn.iteam.kafkaservice.consumer;
 
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
-import tn.iteam.common.kafka.Topics;
+import tn.iteam.kafkaservice.kafka.Topics;
 
 /**
  * Demo consumers for the two auth/order topics.
