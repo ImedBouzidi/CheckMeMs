@@ -1,9 +1,10 @@
 # user-profile-service — (port 8084)
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
-COPY pom.xml .
+COPY pom.xml /pom.xml
+COPY user-profile-service/pom.xml pom.xml
 RUN mvn -B -q dependency:go-offline || true
-COPY src src
+COPY user-profile-service/src src
 RUN mvn -B package -DskipTests
 
 FROM eclipse-temurin:21-jre

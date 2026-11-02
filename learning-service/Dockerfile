@@ -1,9 +1,10 @@
 # learning-service — (port 8091)
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
-COPY pom.xml .
+COPY pom.xml /pom.xml
+COPY learning-service/pom.xml pom.xml
 RUN mvn -B -q dependency:go-offline || true
-COPY src src
+COPY learning-service/src src
 RUN mvn -B package -DskipTests
 
 FROM eclipse-temurin:21-jre

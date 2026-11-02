@@ -172,7 +172,9 @@ services:
     networks: [chess-net]
 
   user-profile-service:
-    build: ./user-profile-service
+    build:
+      context: .
+      dockerfile: user-profile-service/Dockerfile
     image: checkmems/user-profile-service:latest
     environment:
       <<: [*java-opts, *db-env, *keycloak-env]
@@ -199,7 +201,9 @@ services:
     networks: [chess-net]
 
   learning-service:
-    build: ./learning-service
+    build:
+      context: .
+      dockerfile: learning-service/Dockerfile
     image: checkmems/learning-service:latest
     environment:
       <<: [*java-opts, *db-env, *keycloak-env]
