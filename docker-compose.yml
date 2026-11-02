@@ -9,7 +9,7 @@
 #   http://localhost:8761  Eureka console
 #   :8082 kill analysis :8083 games :8084 profiles :8088 kafka-service :8091 learning (direct)
 #
-# Internal-only (no host port): postgres 5432, redis 6379, rabbitmq 5672, kafka 29092(+29093).
+# Internal-only (no host port): postgres 5432, redis 6379, kafka 29092(+29093).
 # They never collide with the local dev instances that share the same defaults.
 #
 # Token validation quirk (see below *keycloak-env): Keycloak advertises iss=http://localhost:8080
@@ -30,11 +30,6 @@ x-db-env: &db-env
   DB_PASSWORD: ${POSTGRES_PASSWORD:-chess_pass}
   REDIS_HOST: redis
   REDIS_PORT: 6379
-  RABBITMQ_HOST: rabbitmq
-  RABBITMQ_PORT: 5672
-  # guest is restricted to localhost on the broker, so services get their own user.
-  RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-chess_user}
-  RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-chess_pass}
   EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
 
 x-keycloak-env: &keycloak-env
@@ -77,18 +72,6 @@ services:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
-      retries: 20
-    networks: [chess-net]
-
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-chess_user}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-chess_pass}
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 10s
-      timeout: 5s
       retries: 20
     networks: [chess-net]
 
@@ -197,7 +180,6 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
-      rabbitmq: { condition: service_healthy }
       eureka-server: { condition: service_healthy }
       keycloak: { condition: service_healthy }
     networks: [chess-net]
@@ -226,7 +208,6 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
-      rabbitmq: { condition: service_healthy }
       eureka-server: { condition: service_healthy }
       keycloak: { condition: service_healthy }
     networks: [chess-net]
@@ -245,7 +226,6 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
-      rabbitmq: { condition: service_healthy }
       eureka-server: { condition: service_healthy }
       keycloak: { condition: service_healthy }
     networks: [chess-net]
@@ -276,7 +256,6 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
-      rabbitmq: { condition: service_healthy }
       kafka: { condition: service_healthy }
       eureka-server: { condition: service_healthy }
       keycloak: { condition: service_healthy }

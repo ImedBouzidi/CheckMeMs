@@ -78,7 +78,7 @@ declare -A KNOWN_PORTS=(
 )
 
 # Expected to be running already: checked here, started elsewhere.
-INFRA=("PostgreSQL|5432" "Redis|6379" "RabbitMQ|5672" "Keycloak|8080")
+INFRA=("PostgreSQL|5432" "Redis|6379" "Keycloak|8080")
 
 SVC_NAMES=(); SVC_PORTS=(); SVC_KINDS=()
 
@@ -506,7 +506,7 @@ infra_table() {
     fi
   done
   rule
-  printf '%s\n' "${DIM}Spring services need PostgreSQL, Redis and RabbitMQ; credentials live in <service>/.env.${NC}"
+  printf '%s\n' "${DIM}Spring services need PostgreSQL and Redis; credentials live in <service>/.env.${NC}"
   printf '%s\n' "${DIM}Resource servers validate tokens against Keycloak realm 'chess-platform' on 8080.${NC}"
   echo
   printf '%s\n' "${BOLD}${BLUE} Endpoints${NC}"

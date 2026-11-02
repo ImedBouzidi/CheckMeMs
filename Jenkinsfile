@@ -59,7 +59,7 @@ pipeline {
                     # Start PostgreSQL before Keycloak so this remains safe when
                     # Jenkins reuses a pgdata volume created by an older build.
                     docker compose up -d --wait \
-                        postgres redis rabbitmq kafka eureka-server
+                        postgres redis kafka eureka-server
 
                     # The compose postgres superuser is chess_user, while the
                     # service .env files use imed/admin. Create that role and
@@ -130,9 +130,6 @@ pipeline {
                                 -e DB_PASSWORD=admin
                                 -e SERVER_PORT=0
                                 -e REDIS_HOST=redis
-                                -e RABBITMQ_HOST=rabbitmq
-                                -e RABBITMQ_USERNAME=chess_user
-                                -e RABBITMQ_PASSWORD=chess_pass
                                 -e KAFKA_BOOTSTRAP_SERVERS=kafka:29092
                                 -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
                                 -e OAUTH2_ISSUER_URI=http://keycloak:8080/realms/chess-platform
@@ -244,7 +241,7 @@ pipeline {
 
     post {
         always {
-            sh 'docker compose stop postgres redis rabbitmq kafka eureka-server keycloak || true'
+            sh 'docker compose stop postgres redis kafka eureka-server keycloak || true'
             sh 'docker compose ps || true'
         }
         failure {
