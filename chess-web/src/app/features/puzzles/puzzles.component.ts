@@ -101,12 +101,12 @@ import { LanguageService } from '../../core/i18n/language.service';
       align-items: center;
       overflow: hidden;
       padding: clamp(28px, 5vw, 52px);
-      border: 1px solid #fde68a;
-      border-radius: 28px;
+      border: 1px solid var(--cm-line);
+      border-radius: 24px;
       background:
-        radial-gradient(460px 280px at 100% 0%, rgba(251, 191, 36, 0.2), transparent 70%),
-        radial-gradient(380px 280px at 0% 100%, rgba(191, 219, 254, 0.42), transparent 70%),
-        linear-gradient(135deg, #fffef8, #fffcf2 52%, #f8fbff);
+        radial-gradient(460px 280px at 100% 0%, rgba(255, 121, 46, 0.2), transparent 70%),
+        radial-gradient(380px 280px at 0% 100%, rgba(0, 217, 255, 0.15), transparent 70%),
+        linear-gradient(135deg, #1d2942, #101629);
       box-shadow: var(--cm-shadow-lg);
     }
 

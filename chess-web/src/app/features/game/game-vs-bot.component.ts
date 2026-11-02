@@ -570,7 +570,7 @@ export interface MoveRecord {
       align-items: center;
       margin-bottom: 20px;
       padding-bottom: 16px;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      border-bottom: 1px solid var(--cm-line);
       flex-wrap: wrap;
       gap: 16px;
     }
@@ -583,9 +583,10 @@ export interface MoveRecord {
 
     .title-meta h1 {
       margin: 0 0 6px;
+      font-family: 'Manrope', sans-serif;
       font-size: 1.6rem;
-      font-weight: 700;
-      color: #1a202c;
+      font-weight: 800;
+      color: var(--cm-ink);
       letter-spacing: -0.02em;
     }
 

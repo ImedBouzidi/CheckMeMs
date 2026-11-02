@@ -319,11 +319,11 @@ interface CourseCard {
       gap: clamp(24px, 4vw, 48px);
       align-items: center;
       padding: clamp(26px, 4.5vw, 48px);
-      border: 1px solid rgba(191, 219, 254, 0.8);
-      border-radius: 28px;
+      border: 1px solid var(--cm-line);
+      border-radius: 24px;
       background:
-        radial-gradient(520px 320px at 100% 0%, rgba(191, 219, 254, 0.5), transparent 70%),
-        radial-gradient(360px 260px at 0% 100%, rgba(254, 243, 199, 0.32), transparent 70%),
+        radial-gradient(520px 320px at 100% 0%, rgba(101, 41, 216, 0.22), transparent 70%),
+        radial-gradient(360px 260px at 0% 100%, rgba(0, 217, 255, 0.1), transparent 70%),
         var(--cm-surface);
       box-shadow: var(--cm-shadow-lg);
     }
@@ -359,10 +359,16 @@ interface CourseCard {
       display: flex;
       flex-direction: column;
       gap: 2px;
-      padding: 15px;
+      padding: 18px 16px;
       border: 1px solid var(--cm-line);
       border-radius: 16px;
       background: var(--cm-surface-muted);
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .stat-card:hover {
+      border-color: var(--cm-primary);
+      transform: translateY(-2px);
     }
 
     .stat-icon {

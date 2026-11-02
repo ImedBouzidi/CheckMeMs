@@ -44,7 +44,7 @@ enum _BuddyState {
   undo,
   win,
   loss,
-  draw
+  draw,
 }
 
 enum _Outcome { none, win, loss, draw }
@@ -174,7 +174,9 @@ class _KidsPlayScreenState extends State<KidsPlayScreen> {
 
     // Give the engine a moment to finish loading on the first move.
     if (!engine.isReady() && !_engineFailed) {
-      _engineWaitDeadline ??= DateTime.now().add(const Duration(milliseconds: 2500));
+      _engineWaitDeadline ??= DateTime.now().add(
+        const Duration(milliseconds: 2500),
+      );
       if (DateTime.now().isBefore(_engineWaitDeadline!)) {
         _buddyTimer = Timer(const Duration(milliseconds: 150), _makeBuddyMove);
         return;
@@ -293,8 +295,8 @@ class _KidsPlayScreenState extends State<KidsPlayScreen> {
       _buddyState = _game.in_check
           ? _BuddyState.buddyCheck
           : captured
-              ? _BuddyState.buddyCapture
-              : _BuddyState.yourTurn;
+          ? _BuddyState.buddyCapture
+          : _BuddyState.yourTurn;
     });
   }
 
@@ -303,7 +305,10 @@ class _KidsPlayScreenState extends State<KidsPlayScreen> {
   List<Map<String, dynamic>> _moves({String? square}) {
     final options = <String, dynamic>{'verbose': true};
     if (square != null) options['square'] = square;
-    return _game.moves(options).whereType<Map<String, dynamic>>().toList(growable: false);
+    return _game
+        .moves(options)
+        .whereType<Map<String, dynamic>>()
+        .toList(growable: false);
   }
 
   bool _isCaptureOrCheck(Map<String, dynamic> move) =>
@@ -315,11 +320,8 @@ class _KidsPlayScreenState extends State<KidsPlayScreen> {
     return to.endsWith('8') || to.endsWith('1');
   }
 
-  bool _applyMove(String from, String to, {String? promotion}) => _game.move({
-    'from': from,
-    'to': to,
-    'promotion': ?promotion,
-  });
+  bool _applyMove(String from, String to, {String? promotion}) =>
+      _game.move({'from': from, 'to': to, 'promotion': ?promotion});
 
   chess_lib.Move? get _lastMove {
     final history = _game.history;
@@ -345,7 +347,9 @@ class _KidsPlayScreenState extends State<KidsPlayScreen> {
     if (piece != null && piece.color == _playerColorObj) {
       setState(() {
         _selectedSquare = square;
-        _legalTargets = _moves(square: square).map((move) => move['to'] as String).toSet();
+        _legalTargets = _moves(square: square)
+            .map((move) => move['to'] as String)
+            .toSet();
       });
     } else {
       setState(() {
@@ -364,7 +368,9 @@ class _KidsPlayScreenState extends State<KidsPlayScreen> {
   }
 
   void _makePlayerMove(String from, String to) {
-    final matches = _moves(square: from).where((move) => move['to'] == to).toList();
+    final matches = _moves(square: from)
+        .where((move) => move['to'] == to)
+        .toList();
     if (matches.isEmpty) {
       setState(() {
         _selectedSquare = null;
@@ -404,7 +410,9 @@ class _KidsPlayScreenState extends State<KidsPlayScreen> {
   }
 
   int get _praiseCount {
-    final praise = context.read<LanguageService>().kidsList('game.buddy.praise');
+    final praise = context.read<LanguageService>().kidsList(
+      'game.buddy.praise',
+    );
     return praise.isEmpty ? 1 : praise.length;
   }
 
@@ -487,7 +495,8 @@ class _KidsPlayScreenState extends State<KidsPlayScreen> {
     engine.newGame();
     _applyLevelToEngine();
 
-    if (!_playsWhite) _scheduleBuddyMove(delay: const Duration(milliseconds: 500));
+    if (!_playsWhite)
+      _scheduleBuddyMove(delay: const Duration(milliseconds: 500));
   }
 
   void _undoMove() {
@@ -723,8 +732,9 @@ class _KidsPlayScreenState extends State<KidsPlayScreen> {
             const SizedBox(height: 14),
             _PlayerRow(
               language: language,
-              colorLabel:
-                  _playsWhite ? language.kids('game.white') : language.kids('game.black'),
+              colorLabel: _playsWhite
+                  ? language.kids('game.white')
+                  : language.kids('game.black'),
               showTurn: _isPlayerTurn && !_isGameOver,
             ),
             const SizedBox(height: 16),
@@ -746,7 +756,9 @@ class _KidsPlayScreenState extends State<KidsPlayScreen> {
     for (var rank = 8; rank >= 1; rank--) {
       for (var file = 0; file < 8; file++) {
         final piece = _game.get('${_files[file]}$rank');
-        if (piece != null && piece.type == chess_lib.PieceType.KING && piece.color == color) {
+        if (piece != null &&
+            piece.type == chess_lib.PieceType.KING &&
+            piece.color == color) {
           return '${_files[file]}$rank';
         }
       }
@@ -798,7 +810,9 @@ class _PlayHeader extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Tooltip(
-          message: muted ? language.kids('game.soundOn') : language.kids('game.soundOff'),
+          message: muted
+              ? language.kids('game.soundOn')
+              : language.kids('game.soundOff'),
           child: KidPill(
             label: '',
             emoji: muted ? '🔇' : '🔊',
@@ -820,7 +834,11 @@ class _PlayHeader extends StatelessWidget {
           );
         }
         return Row(
-          children: [homePill, Expanded(child: Center(child: title)), actions],
+          children: [
+            homePill,
+            Expanded(child: Center(child: title)),
+            actions,
+          ],
         );
       },
     );
@@ -840,23 +858,37 @@ class _TitlePill extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xB3FFFFFF),
         borderRadius: BorderRadius.circular(999),
-        boxShadow: const [BoxShadow(color: Color(0x99C4B5FD), offset: Offset(0, 4))],
+        boxShadow: const [
+          BoxShadow(color: Color(0x99C4B5FD), offset: Offset(0, 4)),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const KidWiggle(child: Text('🤖', style: TextStyle(fontSize: 24, height: 1.2))),
+          const KidWiggle(
+            child: Text('🤖', style: TextStyle(fontSize: 24, height: 1.2)),
+          ),
           const SizedBox(width: 8),
-          Text('$prefix ',
-              style: const TextStyle(
-                  fontSize: 19, fontWeight: FontWeight.w700, color: kKidText)),
+          Text(
+            '$prefix ',
+            style: const TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w700,
+              color: kKidText,
+            ),
+          ),
           ShaderMask(
             shaderCallback: (bounds) => const LinearGradient(
               colors: [kKidPink, kKidPurple, Color(0xFF3B82F6)],
             ).createShader(bounds),
-            child: Text(buddyName,
-                style: const TextStyle(
-                    color: kKidWhite, fontWeight: FontWeight.w800, fontSize: 19)),
+            child: Text(
+              buddyName,
+              style: const TextStyle(
+                color: kKidWhite,
+                fontWeight: FontWeight.w800,
+                fontSize: 19,
+              ),
+            ),
           ),
         ],
       ),
@@ -877,7 +909,9 @@ class _BuddyRow extends StatelessWidget {
       children: [
         _BuddyAvatar(thinking: thinking),
         const SizedBox(width: 12),
-        Expanded(child: _BuddyBubble(message: message, thinking: thinking)),
+        Expanded(
+          child: _BuddyBubble(message: message, thinking: thinking),
+        ),
       ],
     );
   }
@@ -916,11 +950,17 @@ class _BuddyAvatar extends StatelessWidget {
                       boxShadow: const [
                         BoxShadow(color: kKidPurple, offset: Offset(0, 6)),
                         BoxShadow(
-                            color: Color(0xB38B5CF6), offset: Offset(0, 10), blurRadius: 18),
+                          color: Color(0xB38B5CF6),
+                          offset: Offset(0, 10),
+                          blurRadius: 18,
+                        ),
                       ],
                     ),
                     alignment: Alignment.center,
-                    child: const Text('🤖', style: TextStyle(fontSize: 33, height: 1.2)),
+                    child: const Text(
+                      '🤖',
+                      style: TextStyle(fontSize: 33, height: 1.2),
+                    ),
                   ),
                   Positioned(
                     right: 2,
@@ -955,7 +995,8 @@ class _BuddyBubble extends StatefulWidget {
   State<_BuddyBubble> createState() => _BuddyBubbleState();
 }
 
-class _BuddyBubbleState extends State<_BuddyBubble> with SingleTickerProviderStateMixin {
+class _BuddyBubbleState extends State<_BuddyBubble>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _pop = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 400),
@@ -984,7 +1025,10 @@ class _BuddyBubbleState extends State<_BuddyBubble> with SingleTickerProviderSta
         final t = _pop.value;
         return Transform.scale(
           scale: 0.94 + 0.06 * t,
-          child: Opacity(opacity: (0.5 + 0.5 * t).clamp(0.0, 1.0), child: child),
+          child: Opacity(
+            opacity: (0.5 + 0.5 * t).clamp(0.0, 1.0),
+            child: child,
+          ),
         );
       },
       child: Container(
@@ -999,11 +1043,16 @@ class _BuddyBubbleState extends State<_BuddyBubble> with SingleTickerProviderSta
             bottomLeft: Radius.circular(6),
           ),
           border: Border.all(
-              color: thinking ? const Color(0xFFBAE6FD) : const Color(0xFFE9D5FF), width: 3),
+            color: thinking ? const Color(0xFFBAE6FD) : const Color(0xFFE9D5FF),
+            width: 3,
+          ),
           boxShadow: [
             BoxShadow(
-                color: thinking ? const Color(0x807BD3FC) : const Color(0x73C4B5FD),
-                offset: const Offset(0, 6)),
+              color: thinking
+                  ? const Color(0x807BD3FC)
+                  : const Color(0x73C4B5FD),
+              offset: const Offset(0, 6),
+            ),
           ],
         ),
         alignment: Alignment.centerLeft,
@@ -1046,7 +1095,9 @@ class _GameOptions extends StatelessWidget {
         color: const Color(0xD1FFFFFF),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: kKidWhite, width: 3),
-        boxShadow: const [BoxShadow(color: Color(0x80C4B5FD), offset: Offset(0, 5))],
+        boxShadow: const [
+          BoxShadow(color: Color(0x80C4B5FD), offset: Offset(0, 5)),
+        ],
       ),
       child: Wrap(
         spacing: 22,
@@ -1075,20 +1126,23 @@ class _GameOptions extends StatelessWidget {
             label: language.kids('game.difficulty'),
             children: [
               _OptionChip(
-                  label: language.kids('game.levelEasy'),
-                  emoji: '🌱',
-                  active: level == KidsPlayLevel.easy,
-                  onTap: () => onLevel(KidsPlayLevel.easy)),
+                label: language.kids('game.levelEasy'),
+                emoji: '🌱',
+                active: level == KidsPlayLevel.easy,
+                onTap: () => onLevel(KidsPlayLevel.easy),
+              ),
               _OptionChip(
-                  label: language.kids('game.levelMedium'),
-                  emoji: '⭐',
-                  active: level == KidsPlayLevel.medium,
-                  onTap: () => onLevel(KidsPlayLevel.medium)),
+                label: language.kids('game.levelMedium'),
+                emoji: '⭐',
+                active: level == KidsPlayLevel.medium,
+                onTap: () => onLevel(KidsPlayLevel.medium),
+              ),
               _OptionChip(
-                  label: language.kids('game.levelHard'),
-                  emoji: '🚀',
-                  active: level == KidsPlayLevel.hard,
-                  onTap: () => onLevel(KidsPlayLevel.hard)),
+                label: language.kids('game.levelHard'),
+                emoji: '🚀',
+                active: level == KidsPlayLevel.hard,
+                onTap: () => onLevel(KidsPlayLevel.hard),
+              ),
             ],
           ),
         ],
@@ -1108,9 +1162,14 @@ class _OptionGroup extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w800, color: kKidPurpleDeep)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: kKidPurpleDeep,
+          ),
+        ),
         const SizedBox(width: 8),
         ...children,
       ],
@@ -1143,7 +1202,9 @@ class _OptionChip extends StatelessWidget {
         foregroundColor: active ? kKidWhite : const Color(0xFF5B21B6),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(999),
-          side: active ? BorderSide.none : BorderSide(color: const Color(0xFFE9D5FF), width: 2),
+          side: active
+              ? BorderSide.none
+              : BorderSide(color: const Color(0xFFE9D5FF), width: 2),
         ),
         shadowColor: active ? kKidPurpleDeep : Colors.transparent,
         elevation: active ? 3 : 0,
@@ -1168,8 +1229,14 @@ class _OptionChip extends StatelessWidget {
             else if (emoji != null)
               Text(emoji!, style: const TextStyle(fontSize: 14, height: 1.3)),
             const SizedBox(width: 5),
-            Text(label,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, height: 1.3)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                height: 1.3,
+              ),
+            ),
           ],
         ),
       ),
@@ -1205,9 +1272,14 @@ class _PlayBoardFrame extends StatelessWidget {
           stops: [0, 0.45, 1],
         ),
         boxShadow: [
-          BoxShadow(color: glow ? const Color(0xFF67E8F9) : kKidBoardBorder, offset: const Offset(0, 12)),
           BoxShadow(
-            color: (glow ? const Color(0xFF06B6D4) : kKidPurple).withValues(alpha: 0.65),
+            color: glow ? const Color(0xFF67E8F9) : kKidBoardBorder,
+            offset: const Offset(0, 12),
+          ),
+          BoxShadow(
+            color: (glow ? const Color(0xFF06B6D4) : kKidPurple).withValues(
+              alpha: 0.65,
+            ),
             offset: const Offset(0, 26),
             blurRadius: 45,
             spreadRadius: -18,
@@ -1217,13 +1289,24 @@ class _PlayBoardFrame extends StatelessWidget {
       child: Stack(
         children: [
           // The board is the sizing child; everything else floats on top.
-          ClipRRect(borderRadius: BorderRadius.circular(16), child: child),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: AspectRatio(aspectRatio: 1, child: child),
+          ),
           Positioned.fill(child: IgnorePointer(child: _FrameDots())),
           if (badge != null)
-            Positioned(top: 12, left: 0, right: 0, child: Center(child: badge!)),
+            Positioned(
+              top: 12,
+              left: 0,
+              right: 0,
+              child: Center(child: badge!),
+            ),
           if (overlay != null)
             Positioned.fill(
-              child: ClipRRect(borderRadius: BorderRadius.circular(16), child: overlay!),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: overlay!,
+              ),
             ),
         ],
       ),
@@ -1285,7 +1368,11 @@ class _FrameDots extends StatelessWidget {
                     shape: BoxShape.circle,
                     color: const Color(0xCCFFFFFF),
                     boxShadow: [
-                      BoxShadow(color: const Color(0xE6FFFFFF), blurRadius: 8, spreadRadius: 1),
+                      BoxShadow(
+                        color: const Color(0xE6FFFFFF),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
                     ],
                   ),
                 ),
@@ -1331,11 +1418,18 @@ class _CheckBadge extends StatelessWidget {
               color: const Color(0xFFFEF2F2),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: const Color(0xFFFECACA), width: 3),
-              boxShadow: const [BoxShadow(color: Color(0xFFFCACA5), offset: Offset(0, 6))],
+              boxShadow: const [
+                BoxShadow(color: Color(0xFFFCACA5), offset: Offset(0, 6)),
+              ],
             ),
-            child: Text('⚠️ $label',
-                style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFFB91C1C))),
+            child: Text(
+              '⚠️ $label',
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFFB91C1C),
+              ),
+            ),
           ),
         );
       },
@@ -1364,7 +1458,9 @@ class _PlayerRow extends StatelessWidget {
         color: const Color(0xD1FFFFFF),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: kKidWhite, width: 3),
-        boxShadow: const [BoxShadow(color: Color(0xA6A3F3D0), offset: Offset(0, 6))],
+        boxShadow: const [
+          BoxShadow(color: Color(0xA6A3F3D0), offset: Offset(0, 6)),
+        ],
       ),
       child: Row(
         children: [
@@ -1380,7 +1476,10 @@ class _PlayerRow extends StatelessWidget {
               ),
             ),
             alignment: Alignment.center,
-            child: const Text('🧒', style: TextStyle(fontSize: 24, height: 1.2)),
+            child: const Text(
+              '🧒',
+              style: TextStyle(fontSize: 24, height: 1.2),
+            ),
           ),
           const SizedBox(width: 10),
           Flexible(
@@ -1388,18 +1487,31 @@ class _PlayerRow extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               spacing: 4,
               children: [
-                Text(language.kids('game.you'),
-                    style: const TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF14532D))),
+                Text(
+                  language.kids('game.you'),
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF14532D),
+                  ),
+                ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: Text(colorLabel,
-                      style: const TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w700, color: kKidSlate)),
+                  child: Text(
+                    colorLabel,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: kKidSlate,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1431,9 +1543,14 @@ class _TurnPill extends StatelessWidget {
               color: const Color(0xFFDCFCE7),
               borderRadius: BorderRadius.circular(999),
             ),
-            child: Text(label,
-                style: const TextStyle(
-                    fontSize: 14.5, fontWeight: FontWeight.w800, color: Color(0xFF15803D))),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF15803D),
+              ),
+            ),
           ),
         );
       },
@@ -1538,7 +1655,9 @@ class _ControlButton extends StatelessWidget {
           foregroundColor: foreground,
           backgroundColor: Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
           elevation: 0,
         ),
         child: Container(
@@ -1557,9 +1676,15 @@ class _ControlButton extends StatelessWidget {
               Text(emoji, style: const TextStyle(fontSize: 17, height: 1.3)),
               const SizedBox(width: 6),
               Flexible(
-                child: Text(label,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, height: 1.3)),
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    height: 1.3,
+                  ),
+                ),
               ),
             ],
           ),
@@ -1631,8 +1756,13 @@ class _GameOverOverlay extends StatelessWidget {
                   borderRadius: BorderRadius.circular(26),
                   border: Border.all(color: kKidWhite, width: 4),
                   boxShadow: const [
-                    BoxShadow(color: Color(0xCCC4B5FD), offset: Offset(0, 14)),                    BoxShadow(
-                        color: Color(0x800F172A), offset: Offset(0, 30), blurRadius: 50, spreadRadius: -20),
+                    BoxShadow(color: Color(0xCCC4B5FD), offset: Offset(0, 14)),
+                    BoxShadow(
+                      color: Color(0x800F172A),
+                      offset: Offset(0, 30),
+                      blurRadius: 50,
+                      spreadRadius: -20,
+                    ),
                   ],
                 ),
                 child: Column(
@@ -1640,15 +1770,25 @@ class _GameOverOverlay extends StatelessWidget {
                   children: [
                     _ResultBounce(emoji: emoji),
                     const SizedBox(height: 10),
-                    Text(title,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontSize: 27, fontWeight: FontWeight.w800, color: kKidText)),
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 27,
+                        fontWeight: FontWeight.w800,
+                        color: kKidText,
+                      ),
+                    ),
                     const SizedBox(height: 6),
-                    Text(text,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontSize: 15.5, height: 1.45, color: kKidMuted)),
+                    Text(
+                      text,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15.5,
+                        height: 1.45,
+                        color: kKidMuted,
+                      ),
+                    ),
                     const SizedBox(height: 18),
                     _BigButton(
                       label: language.kids('common.playAgain'),
@@ -1691,7 +1831,10 @@ class _ResultBounce extends StatelessWidget {
           angle: (-4 + 8 * wave) * math.pi / 180,
           child: Transform.translate(
             offset: Offset(0, -8 * wave),
-            child: Text(emoji, style: const TextStyle(fontSize: 58, height: 1.1)),
+            child: Text(
+              emoji,
+              style: const TextStyle(fontSize: 58, height: 1.1),
+            ),
           ),
         );
       },
@@ -1740,9 +1883,15 @@ class _BigButton extends StatelessWidget {
             Text(emoji, style: const TextStyle(fontSize: 17, height: 1.3)),
             const SizedBox(width: 8),
             Flexible(
-              child: Text(label,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, height: 1.3)),
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  height: 1.3,
+                ),
+              ),
             ),
           ],
         ),
@@ -1788,26 +1937,30 @@ class _ConfettiLayer extends StatelessWidget {
                 clipBehavior: Clip.hardEdge,
                 children: [
                   for (final piece in confetti)
-                    Builder(builder: (context) {
-                      final seconds = t * _cycle;
-                      if (seconds < piece.delay) return const SizedBox.shrink();
-                      final phase = ((seconds - piece.delay) / piece.duration) % 1.0;
-                      return Positioned(
-                        left: piece.left * (constraints.maxWidth - 10),
-                        top: -20 + phase * (height + 40),
-                        child: Transform.rotate(
-                          angle: phase * 4 * math.pi,
-                          child: Container(
-                            width: 10,
-                            height: 16,
-                            decoration: BoxDecoration(
-                              color: piece.color,
-                              borderRadius: BorderRadius.circular(3),
+                    Builder(
+                      builder: (context) {
+                        final seconds = t * _cycle;
+                        if (seconds < piece.delay)
+                          return const SizedBox.shrink();
+                        final phase =
+                            ((seconds - piece.delay) / piece.duration) % 1.0;
+                        return Positioned(
+                          left: piece.left * (constraints.maxWidth - 10),
+                          top: -20 + phase * (height + 40),
+                          child: Transform.rotate(
+                            angle: phase * 4 * math.pi,
+                            child: Container(
+                              width: 10,
+                              height: 16,
+                              decoration: BoxDecoration(
+                                color: piece.color,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    }),
+                        );
+                      },
+                    ),
                 ],
               );
             },
@@ -1836,14 +1989,24 @@ class _TipsPanel extends StatelessWidget {
         boxShadow: const [
           BoxShadow(color: Color(0xE5E0E7FF), offset: Offset(0, 10)),
           BoxShadow(
-              color: Color(0x666366F1), offset: Offset(0, 20), blurRadius: 36, spreadRadius: -20),
+            color: Color(0x666366F1),
+            offset: Offset(0, 20),
+            blurRadius: 36,
+            spreadRadius: -20,
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(language.kids('game.tipsTitle'),
-              style: const TextStyle(fontSize: 18.5, fontWeight: FontWeight.w800, color: kKidText)),
+          Text(
+            language.kids('game.tipsTitle'),
+            style: const TextStyle(
+              fontSize: 18.5,
+              fontWeight: FontWeight.w800,
+              color: kKidText,
+            ),
+          ),
           const SizedBox(height: 12),
           _TipCard(
             emoji: '👆',
@@ -1874,12 +2037,15 @@ class _TipsPanel extends StatelessWidget {
                 const Text('🌈', style: TextStyle(fontSize: 22, height: 1.2)),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(language.kids('game.noTimer'),
-                      style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          height: 1.35,
-                          color: Color(0xFF92400E))),
+                  child: Text(
+                    language.kids('game.noTimer'),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      height: 1.35,
+                      color: Color(0xFF92400E),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1891,7 +2057,11 @@ class _TipsPanel extends StatelessWidget {
 }
 
 class _TipCard extends StatelessWidget {
-  const _TipCard({required this.emoji, required this.title, required this.text});
+  const _TipCard({
+    required this.emoji,
+    required this.title,
+    required this.text,
+  });
 
   final String emoji;
   final String title;
@@ -1904,7 +2074,9 @@ class _TipCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: kKidWhite,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [BoxShadow(color: Color(0x3394A3B8), offset: Offset(0, 4))],
+        boxShadow: const [
+          BoxShadow(color: Color(0x3394A3B8), offset: Offset(0, 4)),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1915,12 +2087,23 @@ class _TipCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 14.5, fontWeight: FontWeight.w800, color: kKidText)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w800,
+                    color: kKidText,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(text,
-                    style: const TextStyle(fontSize: 13, height: 1.4, color: kKidMuted)),
+                Text(
+                  text,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: kKidMuted,
+                  ),
+                ),
               ],
             ),
           ),

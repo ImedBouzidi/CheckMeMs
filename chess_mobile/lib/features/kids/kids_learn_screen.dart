@@ -35,12 +35,24 @@ class KidsLearnScreen extends StatefulWidget {
 /// Which instructor sentence the bubble shows. The web stores the resolved
 /// string; storing the source instead keeps the copy in sync when the child
 /// switches language mid-lesson.
-enum _HintSource { welcome, emptyBoard, practice, wrongPiece, wrongMove, goodCapture, goodMove }
+enum _HintSource {
+  welcome,
+  emptyBoard,
+  practice,
+  wrongPiece,
+  wrongMove,
+  goodCapture,
+  goodMove,
+}
 
 enum _FeedbackKind { good, wrong }
 
 class _Feedback {
-  const _Feedback({required this.kind, required this.title, required this.message});
+  const _Feedback({
+    required this.kind,
+    required this.title,
+    required this.message,
+  });
 
   final _FeedbackKind kind;
   final String title;
@@ -89,7 +101,11 @@ class _KidsLearnScreenState extends State<KidsLearnScreen> {
   Future<void> _openPiece(KidPiece piece) async {
     _stopSpeaking();
     _dismissFeedback();
-    final chosen = await showKidPiecePopup(context, piece: piece, showTryMe: true);
+    final chosen = await showKidPiecePopup(
+      context,
+      piece: piece,
+      showTryMe: true,
+    );
     if (!mounted || chosen == null) return;
     _startPractice(chosen);
   }
@@ -219,12 +235,19 @@ class _KidsLearnScreenState extends State<KidsLearnScreen> {
       _hintSource = _HintSource.wrongMove;
       _selected = false;
     });
-    _showFeedback(_FeedbackKind.wrong, 'wrongMoveTitle', 'tryGlowing', speak: true);
+    _showFeedback(
+      _FeedbackKind.wrong,
+      'wrongMoveTitle',
+      'tryGlowing',
+      speak: true,
+    );
     _highlight();
   }
 
   void _validateAndMove(String from, String to) {
-    final move = _moves(square: from).where((candidate) => candidate['to'] == to).firstOrNull;
+    final move = _moves(square: from)
+        .where((candidate) => candidate['to'] == to)
+        .firstOrNull;
     if (move == null) {
       _wrongMove();
       return;
@@ -297,14 +320,20 @@ class _KidsLearnScreenState extends State<KidsLearnScreen> {
     setState(() {
       _targets = targets;
       _possibleSquares = targets.length;
-      _arrow = suggested == null ? null : BoardArrow(from: start, to: suggested);
+      _arrow = suggested == null
+          ? null
+          : BoardArrow(from: start, to: suggested);
     });
   }
 
   /* ------------------- instructor dialogue ------------------- */
 
-  void _showFeedback(_FeedbackKind kind, String title, String message,
-      {required bool speak}) {
+  void _showFeedback(
+    _FeedbackKind kind,
+    String title,
+    String message, {
+    required bool speak,
+  }) {
     final language = context.read<LanguageService>();
     setState(() {
       _feedback = _Feedback(
@@ -322,7 +351,9 @@ class _KidsLearnScreenState extends State<KidsLearnScreen> {
       });
     });
     if (speak) {
-      _speak('${language.instructor(title)} ${language.instructor(message, _pieceParam(language))}');
+      _speak(
+        '${language.instructor(title)} ${language.instructor(message, _pieceParam(language))}',
+      );
     }
   }
 
@@ -332,19 +363,25 @@ class _KidsLearnScreenState extends State<KidsLearnScreen> {
     if (_feedback != null && mounted) setState(() => _feedback = null);
   }
 
-  Map<String, Object> _pieceParam(LanguageService language) =>
-      {'piece': language.pieceCopy(_practicePiece?.name ?? 'Pawn', 'sentenceName')};
+  Map<String, Object> _pieceParam(LanguageService language) => {
+    'piece': language.pieceCopy(_practicePiece?.name ?? 'Pawn', 'sentenceName'),
+  };
 
   String _hintText(LanguageService language) => switch (_hintSource) {
-        _HintSource.welcome => language.instructor('welcome'),
-        _HintSource.emptyBoard => language.instructor('emptyBoard'),
-        _HintSource.practice => language.instructor('practiceIntro', _pieceParam(language)),
-        _HintSource.wrongPiece =>
-          language.instructor('wrongPieceMessage', _pieceParam(language)),
-        _HintSource.wrongMove => language.instructor('wrongMoveShort'),
-        _HintSource.goodCapture => language.instructor('goodCaptureHint'),
-        _HintSource.goodMove => language.instructor('goodMoveHint'),
-      };
+    _HintSource.welcome => language.instructor('welcome'),
+    _HintSource.emptyBoard => language.instructor('emptyBoard'),
+    _HintSource.practice => language.instructor(
+      'practiceIntro',
+      _pieceParam(language),
+    ),
+    _HintSource.wrongPiece => language.instructor(
+      'wrongPieceMessage',
+      _pieceParam(language),
+    ),
+    _HintSource.wrongMove => language.instructor('wrongMoveShort'),
+    _HintSource.goodCapture => language.instructor('goodCaptureHint'),
+    _HintSource.goodMove => language.instructor('goodMoveHint'),
+  };
 
   void _toggleVoice() {
     setState(() => _voiceEnabled = !_voiceEnabled);
@@ -365,7 +402,9 @@ class _KidsLearnScreenState extends State<KidsLearnScreen> {
   void _speak(String text) {
     if (!_voiceEnabled) return;
     final language = context.read<LanguageService>();
-    unawaited(_voice.speak(text, code: language.code, speechLang: language.speechLang));
+    unawaited(
+      _voice.speak(text, code: language.code, speechLang: language.speechLang),
+    );
   }
 
   void _stopSpeaking() => _voice.stop();
@@ -437,7 +476,10 @@ class _KidsLearnScreenState extends State<KidsLearnScreen> {
                   },
                 ),
                 const SizedBox(height: 22),
-                _LearnFooter(language: language, onHome: () => context.go(AppRoutes.home)),
+                _LearnFooter(
+                  language: language,
+                  onHome: () => context.go(AppRoutes.home),
+                ),
               ],
             ),
           ),
@@ -480,10 +522,7 @@ class _KidsLearnScreenState extends State<KidsLearnScreen> {
               onSpeak: _sayHint,
             ),
             if (_practicePiece != null) ...[
-              _LegendRow(
-                language: language,
-                possibleSquares: _possibleSquares,
-              ),
+              _LegendRow(language: language, possibleSquares: _possibleSquares),
               const SizedBox(height: 12),
             ],
             _LearnBoardFrame(
@@ -493,7 +532,9 @@ class _KidsLearnScreenState extends State<KidsLearnScreen> {
                 interactive: _practicePiece != null,
                 theme: kKidsBoardTheme,
                 markers: kKidsLearnBoardMarkers,
-                selectedSquare: _targets.isEmpty && !_selected ? null : _practiceSquare,
+                selectedSquare: _targets.isEmpty && !_selected
+                    ? null
+                    : _practiceSquare,
                 legalTargets: _targets,
                 arrows: _arrow == null ? const [] : [_arrow!],
                 hintArrowColor: kKidsArrowColor,
@@ -576,7 +617,11 @@ class _LearnHeader extends StatelessWidget {
           );
         }
         return Row(
-          children: [homePill, Expanded(child: Center(child: title)), actions],
+          children: [
+            homePill,
+            Expanded(child: Center(child: title)),
+            actions,
+          ],
         );
       },
     );
@@ -595,22 +640,37 @@ class _LearnTitle extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xB8FFFFFF),
         borderRadius: BorderRadius.circular(999),
-        boxShadow: const [BoxShadow(color: Color(0x99C4B5FD), offset: Offset(0, 4))],
+        boxShadow: const [
+          BoxShadow(color: Color(0x99C4B5FD), offset: Offset(0, 4)),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const KidWiggle(child: Text('🧩', style: TextStyle(fontSize: 23, height: 1.2))),
+          const KidWiggle(
+            child: Text('🧩', style: TextStyle(fontSize: 23, height: 1.2)),
+          ),
           const SizedBox(width: 8),
-          Text('${language.kids('learn.pageTitlePrefix')} ',
-              style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: kKidText)),
+          Text(
+            '${language.kids('learn.pageTitlePrefix')} ',
+            style: const TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w700,
+              color: kKidText,
+            ),
+          ),
           ShaderMask(
             shaderCallback: (bounds) => const LinearGradient(
               colors: [Color(0xFFEC4899), Color(0xFF8B5CF6), Color(0xFF3B82F6)],
             ).createShader(bounds),
-            child: Text(language.kids('learn.pageTitleStrong'),
-                style: const TextStyle(
-                    color: kKidWhite, fontWeight: FontWeight.w800, fontSize: 19)),
+            child: Text(
+              language.kids('learn.pageTitleStrong'),
+              style: const TextStyle(
+                color: kKidWhite,
+                fontWeight: FontWeight.w800,
+                fontSize: 19,
+              ),
+            ),
           ),
         ],
       ),
@@ -714,7 +774,11 @@ class _CoachAvatar extends StatelessWidget {
         final wave = math.sin(t * math.pi);
         if (talking) {
           // `coach-talk`: lift 4px, rock ±3°, grow to 1.07.
-          return _avatar(-4 * wave, (-3 + 6 * wave) * math.pi / 180, 1 + 0.07 * wave);
+          return _avatar(
+            -4 * wave,
+            (-3 + 6 * wave) * math.pi / 180,
+            1 + 0.07 * wave,
+          );
         }
         // `coach-bob`: lift 6px, rock ±2°.
         return _avatar(-6 * wave, (-2 + 4 * wave) * math.pi / 180, 1);
@@ -743,7 +807,11 @@ class _CoachAvatar extends StatelessWidget {
               boxShadow: const [
                 BoxShadow(color: Color(0xFF38BDF8), offset: Offset(0, 6)),
                 BoxShadow(
-                    color: Color(0xA638BDF8), blurRadius: 18, offset: Offset(0, 10), spreadRadius: -8),
+                  color: Color(0xA638BDF8),
+                  blurRadius: 18,
+                  offset: Offset(0, 10),
+                  spreadRadius: -8,
+                ),
               ],
             ),
             child: Stack(
@@ -799,18 +867,23 @@ class _CoachBubble extends StatelessWidget {
           bottomLeft: Radius.circular(6),
         ),
         border: Border.all(color: const Color(0xFFBAE6FD), width: 3),
-        boxShadow: const [BoxShadow(color: Color(0x737BD3FC), offset: Offset(0, 6))],
+        boxShadow: const [
+          BoxShadow(color: Color(0x737BD3FC), offset: Offset(0, 6)),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
-            child: Text(message,
-                style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF0369A1),
-                    height: 1.35)),
+            child: Text(
+              message,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0369A1),
+                height: 1.35,
+              ),
+            ),
           ),
           const SizedBox(width: 10),
           _RoundIconButton(
@@ -887,7 +960,11 @@ class _RoundIconButton extends StatelessWidget {
                 width: size,
                 height: size,
                 child: Center(
-                    child: Text(emoji, style: TextStyle(fontSize: size * 0.5, height: 1.2))),
+                  child: Text(
+                    emoji,
+                    style: TextStyle(fontSize: size * 0.5, height: 1.2),
+                  ),
+                ),
               ),
             ),
           ),
@@ -924,7 +1001,9 @@ class _LegendRow extends StatelessWidget {
           swatchAlpha: 0.75,
         ),
         _LegendChip(
-          label: language.kids('learn.possibleSquares', {'count': possibleSquares}),
+          label: language.kids('learn.possibleSquares', {
+            'count': possibleSquares,
+          }),
           color: const Color(0xFF6D28D9),
           background: const Color(0xFFF5F3FF),
         ),
@@ -978,7 +1057,9 @@ class _LegendChip extends StatelessWidget {
         color: background,
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: kKidWhite, width: 2),
-        boxShadow: const [BoxShadow(color: Color(0x3894A3B8), offset: Offset(0, 3))],
+        boxShadow: const [
+          BoxShadow(color: Color(0x3894A3B8), offset: Offset(0, 3)),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -994,9 +1075,15 @@ class _LegendChip extends StatelessWidget {
             ),
             const SizedBox(width: 6),
           ],
-          Text(label,
-              style: TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w800, color: color, height: 1.3)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: color,
+              height: 1.3,
+            ),
+          ),
         ],
       ),
     );
@@ -1025,11 +1112,13 @@ class _LearnBoardFrame extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-              color: practising ? const Color(0xFF34D399) : kKidBoardBorder,
-              offset: const Offset(0, 12)),
+            color: practising ? const Color(0xFF34D399) : kKidBoardBorder,
+            offset: const Offset(0, 12),
+          ),
           BoxShadow(
-            color: (practising ? const Color(0xFF10B981) : const Color(0xFF8B5CF6))
-                .withValues(alpha: 0.65),
+            color:
+                (practising ? const Color(0xFF10B981) : const Color(0xFF8B5CF6))
+                    .withValues(alpha: 0.65),
             offset: const Offset(0, 26),
             blurRadius: 45,
             spreadRadius: -18,
@@ -1046,7 +1135,7 @@ class _LearnBoardFrame extends StatelessWidget {
                 border: Border.all(color: kKidWhite, width: 4),
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: child,
+              child: AspectRatio(aspectRatio: 1, child: child),
             ),
           ),
           Positioned.fill(child: IgnorePointer(child: const _FrameSparkles())),
@@ -1101,7 +1190,13 @@ class _FrameSparkles extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget dot(int index, double left, double right, double top, double bottom) {
+    Widget dot(
+      int index,
+      double left,
+      double right,
+      double top,
+      double bottom,
+    ) {
       Widget paint(double t) {
         final phase = (t + index * 0.25) % 1.0;
         final wave = math.sin(phase * math.pi);
@@ -1116,7 +1211,11 @@ class _FrameSparkles extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: const Color(0xD9FFFFFF),
                 boxShadow: const [
-                  BoxShadow(color: Color(0xE6FFFFFF), blurRadius: 8, spreadRadius: 1)
+                  BoxShadow(
+                    color: Color(0xE6FFFFFF),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
                 ],
               ),
             ),
@@ -1125,12 +1224,12 @@ class _FrameSparkles extends StatelessWidget {
       }
 
       Widget positioned(double t) => Positioned(
-            left: left == 0 ? null : left,
-            right: right == 0 ? null : right,
-            top: top == 0 ? null : top,
-            bottom: bottom == 0 ? null : bottom,
-            child: paint(t),
-          );
+        left: left == 0 ? null : left,
+        right: right == 0 ? null : right,
+        top: top == 0 ? null : top,
+        bottom: bottom == 0 ? null : bottom,
+        child: paint(t),
+      );
 
       if (!kidsMotionEnabled(context)) return positioned(0);
 
@@ -1178,36 +1277,47 @@ class _PracticeBar extends StatelessWidget {
           children: [
             Flexible(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xD9FFFFFF),
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(color: kKidWhite, width: 3),
                   boxShadow: [
                     BoxShadow(
-                        color: current == null
-                            ? const Color(0xE6E2E8F0)
-                            : const Color(0xB3A7F3D0),
-                        offset: const Offset(0, 5)),
+                      color: current == null
+                          ? const Color(0xE6E2E8F0)
+                          : const Color(0xB3A7F3D0),
+                      offset: const Offset(0, 5),
+                    ),
                   ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (current != null) ...[
-                      SvgPicture.asset(kidPieceAsset(current.image), width: 30, height: 30),
+                      SvgPicture.asset(
+                        kidPieceAsset(current.image),
+                        width: 30,
+                        height: 30,
+                      ),
                       const SizedBox(width: 8),
                     ],
                     Flexible(
                       child: Text(
                         current == null
                             ? language.kids('learn.emptyPick')
-                            : language.kids('learn.practicing',
-                                {'piece': language.pieceLabel(current.name)}),
+                            : language.kids('learn.practicing', {
+                                'piece': language.pieceLabel(current.name),
+                              }),
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 15,
-                          fontWeight: current == null ? FontWeight.w700 : FontWeight.w800,
+                          fontWeight: current == null
+                              ? FontWeight.w700
+                              : FontWeight.w800,
                           color: current == null
                               ? const Color(0xFF64748B)
                               : const Color(0xFF14532D),
@@ -1266,26 +1376,39 @@ class _PieceSidebar extends StatelessWidget {
             boxShadow: [
               const BoxShadow(color: Color(0xE6E0E7FF), offset: Offset(0, 10)),
               BoxShadow(
-                  color: const Color(0xFF6366F1).withValues(alpha: 0.45),
-                  blurRadius: 40,
-                  offset: const Offset(0, 22),
-                  spreadRadius: -22),
+                color: const Color(0xFF6366F1).withValues(alpha: 0.45),
+                blurRadius: 40,
+                offset: const Offset(0, 22),
+                spreadRadius: -22,
+              ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(language.kids('learn.allPieces'),
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.w800, color: kKidText)),
+              Text(
+                language.kids('learn.allPieces'),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: kKidText,
+                ),
+              ),
               const SizedBox(height: 6),
-              Text(language.kids('learn.allPiecesSub'),
-                  style: const TextStyle(
-                      fontSize: 13.5, color: Color(0xFF64748B), height: 1.4)),
+              Text(
+                language.kids('learn.allPiecesSub'),
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  color: Color(0xFF64748B),
+                  height: 1.4,
+                ),
+              ),
               const SizedBox(height: 10),
               for (var index = 0; index < kidPieces.length; index++)
                 Padding(
-                  padding: EdgeInsets.only(bottom: index == kidPieces.length - 1 ? 0 : 9),
+                  padding: EdgeInsets.only(
+                    bottom: index == kidPieces.length - 1 ? 0 : 9,
+                  ),
                   child: _SlideIn(
                     delay: Duration(milliseconds: index * 70),
                     child: _SidebarPiece(
@@ -1307,14 +1430,21 @@ class _PieceSidebar extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('💡', style: TextStyle(fontSize: 19, height: 1.2)),
+                    const Text(
+                      '💡',
+                      style: TextStyle(fontSize: 19, height: 1.2),
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        language.kids('learn.sidebarNote',
-                            {'coachName': language.instructor('coachName')}),
+                        language.kids('learn.sidebarNote', {
+                          'coachName': language.instructor('coachName'),
+                        }),
                         style: const TextStyle(
-                            fontSize: 13, color: Color(0xFF92400E), height: 1.4),
+                          fontSize: 13,
+                          color: Color(0xFF92400E),
+                          height: 1.4,
+                        ),
                       ),
                     ),
                   ],
@@ -1354,16 +1484,20 @@ class _SidebarPiece extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-            color: active ? const Color(0xFF34D399) : kKidWhite, width: 3),
+          color: active ? const Color(0xFF34D399) : kKidWhite,
+          width: 3,
+        ),
         boxShadow: [
           BoxShadow(
-              color: active ? const Color(0xFF34D399) : const Color(0x4D94A3B8),
-              offset: Offset(0, active ? 6 : 5)),
+            color: active ? const Color(0xFF34D399) : const Color(0x4D94A3B8),
+            offset: Offset(0, active ? 6 : 5),
+          ),
           if (active)
             BoxShadow(
-                color: const Color(0xFF34D399).withValues(alpha: 0.22),
-                blurRadius: 0,
-                spreadRadius: 3),
+              color: const Color(0xFF34D399).withValues(alpha: 0.22),
+              blurRadius: 0,
+              spreadRadius: 3,
+            ),
         ],
       ),
       child: Material(
@@ -1382,30 +1516,47 @@ class _SidebarPiece extends StatelessWidget {
                     color: kKidWhite.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: SvgPicture.asset(kidPieceAsset(piece.image),
-                      width: 38, height: 38, alignment: Alignment.center),
+                  child: SvgPicture.asset(
+                    kidPieceAsset(piece.image),
+                    width: 38,
+                    height: 38,
+                    alignment: Alignment.center,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(label,
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w800, color: kKidText)),
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: kKidText,
+                        ),
+                      ),
                       const SizedBox(height: 1),
-                      Text('${piece.emoji} ${language.kids('learn.tapToLearn')}',
-                          style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF64748B))),
+                      Text(
+                        '${piece.emoji} ${language.kids('learn.tapToLearn')}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 6),
-                const Text('›',
-                    style: TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8))),
+                const Text(
+                  '›',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
               ],
             ),
           ),
@@ -1437,7 +1588,10 @@ class _SlideIn extends StatelessWidget {
         final eased = Curves.easeOut.transform(p.clamp(0.0, 1.0));
         return Opacity(
           opacity: eased,
-          child: Transform.translate(offset: Offset(20 * (1 - eased), 0), child: child),
+          child: Transform.translate(
+            offset: Offset(20 * (1 - eased), 0),
+            child: child,
+          ),
         );
       },
       child: child,
@@ -1476,8 +1630,9 @@ class _FeedbackBanner extends StatelessWidget {
         border: Border.all(color: kKidWhite, width: 3),
         boxShadow: [
           BoxShadow(
-              color: good ? const Color(0xFF86EFAC) : const Color(0xFFFDA4AF),
-              offset: const Offset(0, 7)),
+            color: good ? const Color(0xFF86EFAC) : const Color(0xFFFDA4AF),
+            offset: const Offset(0, 7),
+          ),
           BoxShadow(
             color: (good ? const Color(0xFF16A34A) : const Color(0xFFE11D48))
                 .withValues(alpha: 0.5),
@@ -1490,19 +1645,32 @@ class _FeedbackBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(good ? '🌟' : '🙈', style: const TextStyle(fontSize: 28, height: 1.15)),
+          Text(
+            good ? '🌟' : '🙈',
+            style: const TextStyle(fontSize: 28, height: 1.15),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(feedback.title,
-                    style: const TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w900, height: 1.25)),
+                Text(
+                  feedback.title,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    height: 1.25,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(feedback.message,
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600, height: 1.3)),
+                Text(
+                  feedback.message,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    height: 1.3,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1525,9 +1693,14 @@ class _FeedbackBanner extends StatelessWidget {
                     width: 30,
                     height: 30,
                     child: Center(
-                      child: Text('✕',
-                          style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w900, height: 1.2)),
+                      child: Text(
+                        '✕',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          height: 1.2,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -1540,8 +1713,9 @@ class _FeedbackBanner extends StatelessWidget {
 
     return DefaultTextStyle(
       style: TextStyle(
-          color: good ? const Color(0xFF14532D) : const Color(0xFF881337),
-          fontWeight: FontWeight.w700),
+        color: good ? const Color(0xFF14532D) : const Color(0xFF881337),
+        fontWeight: FontWeight.w700,
+      ),
       child: kidsMotionEnabled(context)
           ? KeyedSubtree(
               key: ValueKey('${feedback.title}${feedback.message}'),
@@ -1552,8 +1726,9 @@ class _FeedbackBanner extends StatelessWidget {
                 builder: (context, t, child) => Opacity(
                   opacity: t.clamp(0.0, 1.0),
                   child: Transform.translate(
-                      offset: Offset(0, 22 * (1 - t)),
-                      child: Transform.scale(scale: 0.9 + 0.1 * t, child: child)),
+                    offset: Offset(0, 22 * (1 - t)),
+                    child: Transform.scale(scale: 0.9 + 0.1 * t, child: child),
+                  ),
                 ),
                 child: card,
               ),
@@ -1581,17 +1756,24 @@ class _LearnFooter extends StatelessWidget {
         spacing: 12,
         runSpacing: 8,
         children: [
-          Text(language.kids('learn.footer'),
-              style: const TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+          Text(
+            language.kids('learn.footer'),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+          ),
           Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: onHome,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                child: Text(language.kids('common.backToNormalHome'),
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF7C3AED))),
+                child: Text(
+                  language.kids('common.backToNormalHome'),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF7C3AED),
+                  ),
+                ),
               ),
             ),
           ),

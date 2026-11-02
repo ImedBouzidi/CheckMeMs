@@ -50,6 +50,7 @@ const List<Color> kKidWorldColors = [
 /// Which floating decorations a kids page uses, matching the three `*-sky`
 /// blocks of the web kids pages.
 enum KidWorldDecor { home, play, learn }
+
 class KidsWorld extends StatefulWidget {
   const KidsWorld({
     super.key,
@@ -68,16 +69,19 @@ class KidsWorld extends StatefulWidget {
   State<KidsWorld> createState() => _KidsWorldState();
 }
 
-
-class _KidsWorldState extends State<KidsWorld> with SingleTickerProviderStateMixin {
+class _KidsWorldState extends State<KidsWorld>
+    with SingleTickerProviderStateMixin {
   /// One master clock; every decorative element divides it into its own speed,
   /// the way CSS `animation-duration` / `animation-delay` pairs do.
   static const double _cycleSeconds = 22;
 
-  late final AnimationController _clock =
-      AnimationController(vsync: this, duration: const Duration(seconds: 22));
+  late final AnimationController _clock = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 22),
+  );
 
-  bool get _reducedMotion => MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+  bool get _reducedMotion =>
+      MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
   @override
   void dispose() {
@@ -86,10 +90,15 @@ class _KidsWorldState extends State<KidsWorld> with SingleTickerProviderStateMix
   }
 
   @override
+  void initState() {
+    super.initState();
+    _clock.repeat();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final frozen = _reducedMotion;
     if (frozen && _clock.isAnimating) _clock.stop();
-    if (!frozen && !_clock.isAnimating) _clock.repeat();
 
     return Stack(
       children: [
@@ -97,8 +106,10 @@ class _KidsWorldState extends State<KidsWorld> with SingleTickerProviderStateMix
           child: RepaintBoundary(
             child: AnimatedBuilder(
               animation: _clock,
-              builder: (context, _) =>
-                  _KidBackdrop(progress: frozen ? 0.14 : _clock.value, decor: widget.decor),
+              builder: (context, _) => _KidBackdrop(
+                progress: frozen ? 0.14 : _clock.value,
+                decor: widget.decor,
+              ),
             ),
           ),
         ),
@@ -187,15 +198,20 @@ class _KidBackdrop extends StatelessWidget {
   double _wave(double p) => (1 - math.cos(p * 2 * math.pi)) / 2;
 
   double _phase(double durationSeconds, double delaySeconds) =>
-      (progress * (_KidsWorldState._cycleSeconds / durationSeconds) + delaySeconds / durationSeconds) %
+      (progress * (_KidsWorldState._cycleSeconds / durationSeconds) +
+          delaySeconds / durationSeconds) %
       1.0;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth.isFinite ? constraints.maxWidth : 900.0;
-        final height = constraints.maxHeight.isFinite ? constraints.maxHeight : 1400.0;
+        final width = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 900.0;
+        final height = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : 1400.0;
 
         return Stack(
           children: [
@@ -230,7 +246,9 @@ class _KidBackdrop extends StatelessWidget {
           colors: kKidWorldColors,
           stops: List.generate(
             kKidWorldColors.length,
-            (i) => (shift + i * 0.35 / (kKidWorldColors.length - 1)).clamp(0.0, 1.0).toDouble(),
+            (i) => (shift + i * 0.35 / (kKidWorldColors.length - 1))
+                .clamp(0.0, 1.0)
+                .toDouble(),
           ),
         ),
       ),
@@ -240,29 +258,37 @@ class _KidBackdrop extends StatelessWidget {
   List<Widget> _decorations(double width, double height) {
     return switch (decor) {
       KidWorldDecor.home => [
-          for (final bubble in _bubbles)
-            Positioned(
-              left: bubble.left * width,
-              top: height + bubble.size -
-                  _phase(bubble.duration, bubble.delay) * (height * 1.35 + bubble.size * 2),
-              child: _rising(bubble),
-            ),
-          for (final piece in _homeDrifters) _driftedPiece(piece, width, height),
-          for (final star in _stars) _twinklingStar(star, width, height),
-        ],
+        for (final bubble in _bubbles)
+          Positioned(
+            left: bubble.left * width,
+            top:
+                height +
+                bubble.size -
+                _phase(bubble.duration, bubble.delay) *
+                    (height * 1.35 + bubble.size * 2),
+            child: _rising(bubble),
+          ),
+        for (final piece in _homeDrifters) _driftedPiece(piece, width, height),
+        for (final star in _stars) _twinklingStar(star, width, height),
+      ],
       KidWorldDecor.play => [
-          for (final cloud in _clouds) _cloud(cloud, width, height),
-          for (final glyph in _playGlyphs) _floatingGlyph(glyph, width, height),
-          for (final piece in _playDrifters) _driftedPiece(piece, width, height),
-        ],
+        for (final cloud in _clouds) _cloud(cloud, width, height),
+        for (final glyph in _playGlyphs) _floatingGlyph(glyph, width, height),
+        for (final piece in _playDrifters) _driftedPiece(piece, width, height),
+      ],
       KidWorldDecor.learn => [
-          for (final glyph in _learnGlyphs) _floatingGlyph(glyph, width, height),
-          for (final piece in _learnDrifters) _driftedPiece(piece, width, height),
-        ],
+        for (final glyph in _learnGlyphs) _floatingGlyph(glyph, width, height),
+        for (final piece in _learnDrifters) _driftedPiece(piece, width, height),
+      ],
     };
   }
 
-  Widget _at(_Anchor anchor, double width, double height, {required Widget child}) {
+  Widget _at(
+    _Anchor anchor,
+    double width,
+    double height, {
+    required Widget child,
+  }) {
     return Positioned(
       left: anchor.left != 0 ? anchor.left * width : null,
       right: anchor.right != 0 ? anchor.right * width : null,
@@ -285,7 +311,12 @@ class _KidBackdrop extends StatelessWidget {
           decoration: BoxDecoration(
             color: bubble.color,
             shape: BoxShape.circle,
-            boxShadow: [BoxShadow(color: bubble.color.withValues(alpha: 0.5), blurRadius: 8)],
+            boxShadow: [
+              BoxShadow(
+                color: bubble.color.withValues(alpha: 0.5),
+                blurRadius: 8,
+              ),
+            ],
           ),
         ),
       ),
@@ -299,7 +330,10 @@ class _KidBackdrop extends StatelessWidget {
       top: cloud.anchor.top * height,
       child: Transform.translate(
         offset: Offset(p * width * 1.3, 0),
-        child: Opacity(opacity: 0.55, child: Text('☁️', style: TextStyle(fontSize: cloud.size, height: 1))),
+        child: Opacity(
+          opacity: 0.55,
+          child: Text('☁️', style: TextStyle(fontSize: cloud.size, height: 1)),
+        ),
       ),
     );
   }
@@ -317,7 +351,10 @@ class _KidBackdrop extends StatelessWidget {
           offset: Offset(0, -18 * wave),
           child: Transform.rotate(
             angle: (-6 + 14 * wave) * math.pi / 180,
-            child: Text(glyph.glyph, style: TextStyle(fontSize: glyph.size, height: 1)),
+            child: Text(
+              glyph.glyph,
+              style: TextStyle(fontSize: glyph.size, height: 1),
+            ),
           ),
         ),
       ),
@@ -326,7 +363,9 @@ class _KidBackdrop extends StatelessWidget {
 
   Widget _driftedPiece(_Drifter piece, double width, double height) {
     final wave = _wave(_phase(piece.duration, piece.delay));
-    final lift = piece.anchor.bottom != 0 ? piece.lift * wave : -piece.lift * wave;
+    final lift = piece.anchor.bottom != 0
+        ? piece.lift * wave
+        : -piece.lift * wave;
     return _at(
       piece.anchor,
       width,
@@ -358,7 +397,10 @@ class _KidBackdrop extends StatelessWidget {
         opacity: 0.25 + 0.75 * wave,
         child: Transform.scale(
           scale: 0.8 + 0.35 * wave,
-          child: Text('✦', style: TextStyle(fontSize: star.size, color: kKidAmber, height: 1)),
+          child: Text(
+            '✦',
+            style: TextStyle(fontSize: star.size, color: kKidAmber, height: 1),
+          ),
         ),
       ),
     );
@@ -399,8 +441,16 @@ class _Anchor {
 }
 
 class _Drifter {
-  const _Drifter(this.image, this.size, this.anchor, this.delay, this.opacity, this.duration,
-      this.degrees, this.lift);
+  const _Drifter(
+    this.image,
+    this.size,
+    this.anchor,
+    this.delay,
+    this.opacity,
+    this.duration,
+    this.degrees,
+    this.lift,
+  );
   final String image;
   final double size;
   final _Anchor anchor;
@@ -449,11 +499,15 @@ class KidPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: kKidWhite, width: 4),
         boxShadow: [
-          BoxShadow(color: shadowColor.withValues(alpha: 0.16), offset: Offset(0, shadowOffset)),
           BoxShadow(
-              color: shadowColor.withValues(alpha: 0.3),
-              blurRadius: 42,
-              offset: Offset(0, shadowOffset + 14)),
+            color: shadowColor.withValues(alpha: 0.16),
+            offset: Offset(0, shadowOffset),
+          ),
+          BoxShadow(
+            color: shadowColor.withValues(alpha: 0.3),
+            blurRadius: 42,
+            offset: Offset(0, shadowOffset + 14),
+          ),
         ],
       ),
       child: child,
@@ -497,17 +551,27 @@ class KidPill extends StatelessWidget {
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-            child: child ??
+            child:
+                child ??
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (emoji != null) ...[
-                      Text(emoji!, style: const TextStyle(fontSize: 15, height: 1.2)),
+                      Text(
+                        emoji!,
+                        style: const TextStyle(fontSize: 15, height: 1.2),
+                      ),
                       const SizedBox(width: 6),
                     ],
-                    Text(label,
-                        style: TextStyle(
-                            color: color, fontWeight: FontWeight.w800, fontSize: 14, height: 1.2)),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        height: 1.2,
+                      ),
+                    ),
                   ],
                 ),
           ),
@@ -543,10 +607,12 @@ class KidMegaButton extends StatefulWidget {
   State<KidMegaButton> createState() => _KidMegaButtonState();
 }
 
-class _KidMegaButtonState extends State<KidMegaButton> with SingleTickerProviderStateMixin {
-  late final AnimationController _breath =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 2400))
-        ..repeat(reverse: true);
+class _KidMegaButtonState extends State<KidMegaButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _breath = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2400),
+  )..repeat(reverse: true);
   bool _pressed = false;
 
   @override
@@ -569,23 +635,39 @@ class _KidMegaButtonState extends State<KidMegaButton> with SingleTickerProvider
       ),
       child: Container(
         padding: EdgeInsets.symmetric(
-            horizontal: widget.compact ? 20 : 28, vertical: widget.compact ? 13 : 17),
+          horizontal: widget.compact ? 20 : 28,
+          vertical: widget.compact ? 13 : 17,
+        ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-              begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [top, bottom]),
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [top, bottom],
+          ),
           borderRadius: BorderRadius.circular(widget.compact ? 16 : 999),
           boxShadow: [
             BoxShadow(color: base, offset: Offset(0, widget.compact ? 6 : 8)),
             BoxShadow(
-                color: top.withValues(alpha: 0.55), blurRadius: 26, offset: const Offset(0, 14)),
+              color: top.withValues(alpha: 0.55),
+              blurRadius: 26,
+              offset: const Offset(0, 14),
+            ),
           ],
         ),
         child: Row(
           mainAxisSize: widget.expanded ? MainAxisSize.max : MainAxisSize.min,
-          mainAxisAlignment: widget.expanded ? MainAxisAlignment.center : MainAxisAlignment.start,
+          mainAxisAlignment: widget.expanded
+              ? MainAxisAlignment.center
+              : MainAxisAlignment.start,
           children: [
             if (widget.emoji != null) ...[
-              Text(widget.emoji!, style: TextStyle(fontSize: widget.compact ? 20 : 24, height: 1.2)),
+              Text(
+                widget.emoji!,
+                style: TextStyle(
+                  fontSize: widget.compact ? 20 : 24,
+                  height: 1.2,
+                ),
+              ),
               const SizedBox(width: 10),
             ],
             Flexible(
@@ -613,7 +695,9 @@ class _KidMegaButtonState extends State<KidMegaButton> with SingleTickerProvider
       child: button,
     );
 
-    return widget.expanded ? SizedBox(width: double.infinity, child: tappable) : tappable;
+    return widget.expanded
+        ? SizedBox(width: double.infinity, child: tappable)
+        : tappable;
   }
 }
 
@@ -641,12 +725,19 @@ class KidChoiceCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-            begin: Alignment.topLeft, end: const Alignment(0.6, 1), colors: palette.colors),
+          begin: Alignment.topLeft,
+          end: const Alignment(0.6, 1),
+          colors: palette.colors,
+        ),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: kKidWhite, width: 4),
         boxShadow: [
           BoxShadow(color: palette.base, offset: const Offset(0, 12)),
-          BoxShadow(color: palette.glow, blurRadius: 36, offset: const Offset(0, 22)),
+          BoxShadow(
+            color: palette.glow,
+            blurRadius: 36,
+            offset: const Offset(0, 22),
+          ),
         ],
       ),
       child: Material(
@@ -661,18 +752,30 @@ class KidChoiceCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(emoji, style: const TextStyle(fontSize: 42, height: 1.15)),
+                  Text(
+                    emoji,
+                    style: const TextStyle(fontSize: 42, height: 1.15),
+                  ),
                   const SizedBox(height: 8),
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: kKidTextStrong,
-                          height: 1.25)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: kKidTextStrong,
+                      height: 1.25,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Expanded(
-                    child: Text(text,
-                        style: const TextStyle(fontSize: 15, color: kKidBody, height: 1.45)),
+                    child: Text(
+                      text,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: kKidBody,
+                        height: 1.45,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 10),
                   DecoratedBox(
@@ -681,10 +784,18 @@ class KidChoiceCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                      child: Text(cta,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 15, color: kKidTextStrong)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 7,
+                      ),
+                      child: Text(
+                        cta,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          color: kKidTextStrong,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -698,9 +809,21 @@ class KidChoiceCard extends StatelessWidget {
 }
 
 enum KidChoicePalette {
-  play([Color(0xFFD1FAE5), Color(0xFFA7F3D0)], Color(0xFF6EE7B7), Color(0x9910B981)),
-  learn([Color(0xFFDBEAFE), Color(0xFFBFDBFE)], Color(0xFF93C5FD), Color(0x993B82F6)),
-  puzzle([Color(0xFFFEF3C7), Color(0xFFFDE68A)], Color(0xFFFCD34D), Color(0x99F59E0B));
+  play(
+    [Color(0xFFD1FAE5), Color(0xFFA7F3D0)],
+    Color(0xFF6EE7B7),
+    Color(0x9910B981),
+  ),
+  learn(
+    [Color(0xFFDBEAFE), Color(0xFFBFDBFE)],
+    Color(0xFF93C5FD),
+    Color(0x993B82F6),
+  ),
+  puzzle(
+    [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
+    Color(0xFFFCD34D),
+    Color(0x99F59E0B),
+  );
 
   const KidChoicePalette(this.colors, this.base, this.glow);
   final List<Color> colors;
@@ -730,10 +853,15 @@ class KidPieceCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-            begin: Alignment.topLeft, end: const Alignment(0.6, 1), colors: [kKidWhite, piece.tint]),
+          begin: Alignment.topLeft,
+          end: const Alignment(0.6, 1),
+          colors: [kKidWhite, piece.tint],
+        ),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: kKidWhite, width: 3),
-        boxShadow: const [BoxShadow(color: kKidSlateShadow, offset: Offset(0, 7))],
+        boxShadow: const [
+          BoxShadow(color: kKidSlateShadow, offset: Offset(0, 7)),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -741,21 +869,33 @@ class KidPieceCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(22),
           onTap: onTap,
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: compact ? 12 : 16),
+            padding: EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: compact ? 12 : 16,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(piece.emoji, style: const TextStyle(fontSize: 21, height: 1.2)),
+                Text(
+                  piece.emoji,
+                  style: const TextStyle(fontSize: 21, height: 1.2),
+                ),
                 SvgPicture.asset(
                   kidPieceAsset(piece.image),
                   width: compact ? 46 : 66,
                   height: compact ? 46 : 66,
                 ),
                 const SizedBox(height: 4),
-                Text(label,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 16, color: kKidText, height: 1.25)),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    color: kKidText,
+                    height: 1.25,
+                  ),
+                ),
                 if (!compact)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
@@ -765,10 +905,18 @@ class KidPieceCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                        child: Text(tapLabel,
-                            style: const TextStyle(
-                                color: kKidViolet, fontWeight: FontWeight.w800, fontSize: 12.5)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 3,
+                        ),
+                        child: Text(
+                          tapLabel,
+                          style: const TextStyle(
+                            color: kKidViolet,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12.5,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -783,7 +931,12 @@ class KidPieceCard extends StatelessWidget {
 
 /// Numbered "how to play" card.
 class KidStepCard extends StatelessWidget {
-  const KidStepCard({super.key, required this.number, required this.emoji, required this.text});
+  const KidStepCard({
+    super.key,
+    required this.number,
+    required this.emoji,
+    required this.text,
+  });
 
   final int number;
   final String emoji;
@@ -799,16 +952,24 @@ class KidStepCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: kKidWhite,
             borderRadius: BorderRadius.circular(22),
-            boxShadow: const [BoxShadow(color: Color(0x4094A3B8), offset: Offset(0, 6))],
+            boxShadow: const [
+              BoxShadow(color: Color(0x4094A3B8), offset: Offset(0, 6)),
+            ],
           ),
           child: Column(
             children: [
               Text(emoji, style: const TextStyle(fontSize: 30, height: 1.2)),
               const SizedBox(height: 6),
-              Text(text,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, color: kKidBody, fontSize: 15, height: 1.4)),
+              Text(
+                text,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: kKidBody,
+                  fontSize: 15,
+                  height: 1.4,
+                ),
+              ),
             ],
           ),
         ),
@@ -822,10 +983,18 @@ class KidStepCard extends StatelessWidget {
             decoration: const BoxDecoration(
               color: kKidPurple,
               shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: kKidPurpleDeep, offset: Offset(0, 3))],
+              boxShadow: [
+                BoxShadow(color: kKidPurpleDeep, offset: Offset(0, 3)),
+              ],
             ),
-            child: Text('$number',
-                style: const TextStyle(color: kKidWhite, fontWeight: FontWeight.w800, fontSize: 14)),
+            child: Text(
+              '$number',
+              style: const TextStyle(
+                color: kKidWhite,
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
+              ),
+            ),
           ),
         ),
       ],
@@ -835,7 +1004,12 @@ class KidStepCard extends StatelessWidget {
 
 /// Section heading + sub copy.
 class KidSectionTitle extends StatelessWidget {
-  const KidSectionTitle({super.key, required this.title, this.subtitle, this.center = false});
+  const KidSectionTitle({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.center = false,
+  });
 
   final String title;
   final String? subtitle;
@@ -844,17 +1018,31 @@ class KidSectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: center ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+      crossAxisAlignment: center
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.start,
       children: [
-        Text(title,
-            textAlign: center ? TextAlign.center : TextAlign.start,
-            style: const TextStyle(
-                fontSize: 26, fontWeight: FontWeight.w800, color: kKidText, height: 1.25)),
+        Text(
+          title,
+          textAlign: center ? TextAlign.center : TextAlign.start,
+          style: const TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            color: kKidText,
+            height: 1.25,
+          ),
+        ),
         if (subtitle != null) ...[
           const SizedBox(height: 6),
-          Text(subtitle!,
-              textAlign: center ? TextAlign.center : TextAlign.start,
-              style: const TextStyle(fontSize: 15, color: kKidMuted, height: 1.45)),
+          Text(
+            subtitle!,
+            textAlign: center ? TextAlign.center : TextAlign.start,
+            style: const TextStyle(
+              fontSize: 15,
+              color: kKidMuted,
+              height: 1.45,
+            ),
+          ),
         ],
       ],
     );
@@ -879,8 +1067,10 @@ class KidBoardFrame extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: (coach ? const Color(0xFFF59E0B) : kKidBoardBorder).withValues(alpha: 0.5),
-              offset: const Offset(0, 6)),
+            color: (coach ? const Color(0xFFF59E0B) : kKidBoardBorder)
+                .withValues(alpha: 0.5),
+            offset: const Offset(0, 6),
+          ),
         ],
       ),
       child: ClipRRect(borderRadius: BorderRadius.circular(12), child: child),
@@ -891,7 +1081,11 @@ class KidBoardFrame extends StatelessWidget {
 /// 5x5 teaching grid: piece on the centre square, green dots for moves, pink
 /// ring for captures.
 class KidMiniBoard extends StatefulWidget {
-  const KidMiniBoard({super.key, required this.piece, this.enemyPawnLabel = ''});
+  const KidMiniBoard({
+    super.key,
+    required this.piece,
+    this.enemyPawnLabel = '',
+  });
 
   final KidPiece piece;
   final String enemyPawnLabel;
@@ -900,10 +1094,12 @@ class KidMiniBoard extends StatefulWidget {
   State<KidMiniBoard> createState() => _KidMiniBoardState();
 }
 
-class _KidMiniBoardState extends State<KidMiniBoard> with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
-        ..repeat(reverse: true);
+class _KidMiniBoardState extends State<KidMiniBoard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1200),
+  )..repeat(reverse: true);
 
   @override
   void dispose() {
@@ -917,7 +1113,9 @@ class _KidMiniBoardState extends State<KidMiniBoard> with SingleTickerProviderSt
       decoration: BoxDecoration(
         border: Border.all(color: kKidBoardBorder, width: 4),
         borderRadius: BorderRadius.circular(14),
-        boxShadow: const [BoxShadow(color: Color(0x80A78BFA), offset: Offset(0, 6))],
+        boxShadow: const [
+          BoxShadow(color: Color(0x80A78BFA), offset: Offset(0, 6)),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: AspectRatio(
@@ -954,8 +1152,8 @@ class _KidMiniBoardState extends State<KidMiniBoard> with SingleTickerProviderSt
     final background = center
         ? const Color(0xFFFEF08A)
         : dark
-            ? const Color(0xFFC4B5FD)
-            : const Color(0xFFFFF7CC);
+        ? const Color(0xFFC4B5FD)
+        : const Color(0xFFFFF7CC);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -964,7 +1162,10 @@ class _KidMiniBoardState extends State<KidMiniBoard> with SingleTickerProviderSt
           color: background,
           foregroundDecoration: center
               ? BoxDecoration(
-                  border: Border.all(color: kKidAmber, width: (side * 0.075).clamp(2.0, 6.0)),
+                  border: Border.all(
+                    color: kKidAmber,
+                    width: (side * 0.075).clamp(2.0, 6.0),
+                  ),
                   borderRadius: BorderRadius.circular(2),
                 )
               : null,
@@ -986,8 +1187,11 @@ class _KidMiniBoardState extends State<KidMiniBoard> with SingleTickerProviderSt
               if (!center && capture)
                 Semantics(
                   label: widget.enemyPawnLabel,
-                  child: SvgPicture.asset('assets/pieces/bp.svg',
-                      width: side * 0.64, height: side * 0.64),
+                  child: SvgPicture.asset(
+                    'assets/pieces/bp.svg',
+                    width: side * 0.64,
+                    height: side * 0.64,
+                  ),
                 ),
               if (!center && capture)
                 Transform.scale(
@@ -999,9 +1203,15 @@ class _KidMiniBoardState extends State<KidMiniBoard> with SingleTickerProviderSt
                       height: side * 0.74,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: kKidPink, width: (side * 0.09).clamp(2.0, 6.0)),
+                        border: Border.all(
+                          color: kKidPink,
+                          width: (side * 0.09).clamp(2.0, 6.0),
+                        ),
                         boxShadow: [
-                          BoxShadow(color: kKidWhite.withValues(alpha: 0.75), spreadRadius: 2.5)
+                          BoxShadow(
+                            color: kKidWhite.withValues(alpha: 0.75),
+                            spreadRadius: 2.5,
+                          ),
                         ],
                       ),
                     ),
@@ -1019,7 +1229,10 @@ class _KidMiniBoardState extends State<KidMiniBoard> with SingleTickerProviderSt
                         color: kKidLearnGreen,
                         shape: BoxShape.circle,
                         boxShadow: [
-                          BoxShadow(color: kKidWhite.withValues(alpha: 0.75), spreadRadius: 2.5)
+                          BoxShadow(
+                            color: kKidWhite.withValues(alpha: 0.75),
+                            spreadRadius: 2.5,
+                          ),
                         ],
                       ),
                     ),
@@ -1035,7 +1248,11 @@ class _KidMiniBoardState extends State<KidMiniBoard> with SingleTickerProviderSt
 
 /// Green dot / pink ring legend under the mini board.
 class KidMoveLegend extends StatelessWidget {
-  const KidMoveLegend({super.key, required this.moveLabel, required this.captureLabel});
+  const KidMoveLegend({
+    super.key,
+    required this.moveLabel,
+    required this.captureLabel,
+  });
 
   final String moveLabel;
   final String captureLabel;
@@ -1075,14 +1292,20 @@ class KidMoveLegend extends StatelessWidget {
   }
 
   Widget _item(Widget swatch, String label) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          swatch,
-          const SizedBox(width: 6),
-          Text(label,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: kKidSlate)),
-        ],
-      );
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      swatch,
+      const SizedBox(width: 6),
+      Text(
+        label,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: kKidSlate,
+        ),
+      ),
+    ],
+  );
 }
 
 /// "How it moves" / "How it captures" explainer boxes.
@@ -1108,7 +1331,9 @@ class KidInfoBox extends StatelessWidget {
         color: capture ? const Color(0xFFFDF2F8) : const Color(0xFFECFDF5),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: capture ? const Color(0xFFFBCFE8) : const Color(0xFFA7F3D0), width: 2),
+          color: capture ? const Color(0xFFFBCFE8) : const Color(0xFFA7F3D0),
+          width: 2,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1119,11 +1344,23 @@ class KidInfoBox extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: kKidText)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: kKidText,
+                  ),
+                ),
                 const SizedBox(height: 3),
-                Text(text,
-                    style: const TextStyle(fontSize: 13.5, color: kKidSlate, height: 1.4)),
+                Text(
+                  text,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    color: kKidSlate,
+                    height: 1.4,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1147,9 +1384,13 @@ Future<KidPiece?> showKidPiecePopup(
     barrierLabel: language.kids('popup.close'),
     barrierColor: kKidText.withValues(alpha: 0.55),
     transitionDuration: const Duration(milliseconds: 320),
-    pageBuilder: (dialogContext, _, _) => _KidPieceDialog(piece: piece, showTryMe: showTryMe),
+    pageBuilder: (dialogContext, _, _) =>
+        _KidPieceDialog(piece: piece, showTryMe: showTryMe),
     transitionBuilder: (context, animation, _, child) {
-      final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutBack);
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutBack,
+      );
       return FadeTransition(
         opacity: curved,
         child: ScaleTransition(
@@ -1191,9 +1432,15 @@ class _KidPieceDialog extends StatelessWidget {
                 borderRadius: BorderRadius.circular(30),
                 border: Border.all(color: kKidWhite, width: 4),
                 boxShadow: [
-                  const BoxShadow(color: Color(0xD9C4B5FD), offset: Offset(0, 16)),
-                  BoxShadow(color: kKidText.withValues(alpha: 0.5),
-                      blurRadius: 70, offset: const Offset(0, 40)),
+                  const BoxShadow(
+                    color: Color(0xD9C4B5FD),
+                    offset: Offset(0, 16),
+                  ),
+                  BoxShadow(
+                    color: kKidText.withValues(alpha: 0.5),
+                    blurRadius: 70,
+                    offset: const Offset(0, 40),
+                  ),
                 ],
               ),
               child: Stack(
@@ -1208,24 +1455,41 @@ class _KidPieceDialog extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _Halo(
-                              child: SvgPicture.asset(kidPieceAsset(piece.image),
-                                  width: 88, height: 88),
+                              child: SvgPicture.asset(
+                                kidPieceAsset(piece.image),
+                                width: 88,
+                                height: 88,
+                              ),
                             ),
                             const SizedBox(width: 14),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(piece.emoji, style: const TextStyle(fontSize: 20, height: 1.2)),
-                                  Text(label,
-                                      style: const TextStyle(
-                                          fontSize: 27,
-                                          fontWeight: FontWeight.w800,
-                                          color: kKidText,
-                                          height: 1.2)),
-                                  Text(language.pieceCopy(piece.name, 'tip'),
-                                      style: const TextStyle(
-                                          fontSize: 14, color: kKidMuted, height: 1.4)),
+                                  Text(
+                                    piece.emoji,
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                  Text(
+                                    label,
+                                    style: const TextStyle(
+                                      fontSize: 27,
+                                      fontWeight: FontWeight.w800,
+                                      color: kKidText,
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                  Text(
+                                    language.pieceCopy(piece.name, 'tip'),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: kKidMuted,
+                                      height: 1.4,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -1239,7 +1503,10 @@ class _KidPieceDialog extends StatelessWidget {
                           color: kKidWhite,
                           borderRadius: BorderRadius.circular(22),
                           boxShadow: const [
-                            BoxShadow(color: Color(0xFFF3E8FF), spreadRadius: 3)
+                            BoxShadow(
+                              color: Color(0xFFF3E8FF),
+                              spreadRadius: 3,
+                            ),
                           ],
                         ),
                         child: Column(
@@ -1247,13 +1514,18 @@ class _KidPieceDialog extends StatelessWidget {
                             ConstrainedBox(
                               constraints: const BoxConstraints(maxWidth: 320),
                               child: KidMiniBoard(
-                                  piece: piece,
-                                  enemyPawnLabel: language.kids('popup.enemyPawn')),
+                                piece: piece,
+                                enemyPawnLabel: language.kids(
+                                  'popup.enemyPawn',
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 12),
                             KidMoveLegend(
                               moveLabel: language.kids('popup.canMoveHere'),
-                              captureLabel: language.kids('popup.canCaptureHere'),
+                              captureLabel: language.kids(
+                                'popup.canCaptureHere',
+                              ),
                             ),
                           ],
                         ),
@@ -1306,11 +1578,21 @@ class _KidPieceDialog extends StatelessWidget {
                             decoration: const BoxDecoration(
                               color: kKidCream,
                               shape: BoxShape.circle,
-                              boxShadow: [BoxShadow(color: Color(0xFFFCD34D), offset: Offset(0, 3))],
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color(0xFFFCD34D),
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
                             ),
-                            child: const Text('✕',
-                                style: TextStyle(
-                                    color: kKidBrown, fontWeight: FontWeight.w800, fontSize: 16)),
+                            child: const Text(
+                              '✕',
+                              style: TextStyle(
+                                color: kKidBrown,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -1356,19 +1638,24 @@ class KidDialogButton extends StatelessWidget {
               : LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: pink ? [kKidPurple, kKidPink] : [kKidLearnGreen, const Color(0xFF06B6D4)],
+                  colors: pink
+                      ? [kKidPurple, kKidPink]
+                      : [kKidLearnGreen, const Color(0xFF06B6D4)],
                 ),
           color: outline ? kKidWhite : null,
           borderRadius: BorderRadius.circular(16),
-          border: outline ? Border.all(color: const Color(0xFFDDD6FE), width: 2) : null,
+          border: outline
+              ? Border.all(color: const Color(0xFFDDD6FE), width: 2)
+              : null,
           boxShadow: [
             BoxShadow(
-                color: outline
-                    ? const Color(0xFFDDD6FE)
-                    : pink
-                        ? kKidPurpleDeep
-                        : const Color(0xFF15803D),
-                offset: const Offset(0, 6)),
+              color: outline
+                  ? const Color(0xFFDDD6FE)
+                  : pink
+                  ? kKidPurpleDeep
+                  : const Color(0xFF15803D),
+              offset: const Offset(0, 6),
+            ),
           ],
         ),
         child: Text(
@@ -1403,7 +1690,11 @@ class _Halo extends StatelessWidget {
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [Color(0xFFFDE68A), Color(0xFFFBCFE8), Colors.transparent],
+                colors: [
+                  Color(0xFFFDE68A),
+                  Color(0xFFFBCFE8),
+                  Colors.transparent,
+                ],
                 stops: [0, 0.55, 0.72],
               ),
             ),
@@ -1448,8 +1739,10 @@ class KidHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selected =
-        languages.firstWhere((item) => item.code == selectedLanguage, orElse: () => languages.first);
+    final selected = languages.firstWhere(
+      (item) => item.code == selectedLanguage,
+      orElse: () => languages.first,
+    );
 
     return Wrap(
       spacing: 10,
@@ -1501,26 +1794,42 @@ class KidHeader extends StatelessWidget {
                 decoration: const BoxDecoration(
                   color: kKidWhite,
                   borderRadius: BorderRadius.all(Radius.circular(14)),
-                  boxShadow: [BoxShadow(color: Color(0xFFC084FC), offset: Offset(0, 4))],
+                  boxShadow: [
+                    BoxShadow(color: Color(0xFFC084FC), offset: Offset(0, 4)),
+                  ],
                 ),
                 child: SvgPicture.asset(
                   'assets/logo/knight-dark.svg',
                   width: 32,
                   height: 32,
-                  errorBuilder: (context, error, stack) =>
-                      SvgPicture.asset('assets/pieces/wn.svg', width: 32, height: 32),
+                  errorBuilder: (context, error, stack) => SvgPicture.asset(
+                    'assets/pieces/wn.svg',
+                    width: 32,
+                    height: 32,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
-              const Text('CheckMe ',
-                  style: TextStyle(fontSize: 21, fontWeight: FontWeight.w700, color: kKidText)),
+              const Text(
+                'CheckMe ',
+                style: TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.w700,
+                  color: kKidText,
+                ),
+              ),
               ShaderMask(
                 shaderCallback: (bounds) => const LinearGradient(
                   colors: [kKidPink, kKidPurple, Color(0xFF3B82F6)],
                 ).createShader(bounds),
-                child: const Text('Kids',
-                    style: TextStyle(
-                        color: kKidWhite, fontWeight: FontWeight.w800, fontSize: 21)),
+                child: const Text(
+                  'Kids',
+                  style: TextStyle(
+                    color: kKidWhite,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 21,
+                  ),
+                ),
               ),
             ],
           ),
@@ -1546,8 +1855,10 @@ class KidLanguagePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = languages.firstWhere((item) => item.code == selected,
-        orElse: () => languages.first);
+    final active = languages.firstWhere(
+      (item) => item.code == selected,
+      orElse: () => languages.first,
+    );
 
     return PopupMenuButton<String>(
       initialValue: active.code,
@@ -1557,8 +1868,13 @@ class KidLanguagePicker extends StatelessWidget {
         for (final language in languages)
           PopupMenuItem<String>(
             value: language.code,
-            child: Text(language.name,
-                style: const TextStyle(color: kKidText, fontWeight: FontWeight.w700)),
+            child: Text(
+              language.name,
+              style: const TextStyle(
+                color: kKidText,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
       ],
       child: Row(
@@ -1568,10 +1884,16 @@ class KidLanguagePicker extends StatelessWidget {
           const SizedBox(width: 6),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 140),
-            child: Text(active.name,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    color: kKidSlate, fontWeight: FontWeight.w800, fontSize: 14, height: 1.2)),
+            child: Text(
+              active.name,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: kKidSlate,
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
+                height: 1.2,
+              ),
+            ),
           ),
           const Icon(Icons.arrow_drop_down_rounded, color: kKidSlate, size: 20),
         ],
@@ -1601,8 +1923,16 @@ class KidLoop extends StatefulWidget {
 }
 
 class _KidLoopState extends State<KidLoop> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller =
-      AnimationController(vsync: this, duration: widget.period);
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: widget.period,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.repeat(reverse: widget.reverse);
+  }
 
   @override
   void didUpdateWidget(covariant KidLoop oldWidget) {
@@ -1627,7 +1957,6 @@ class _KidLoopState extends State<KidLoop> with SingleTickerProviderStateMixin {
       if (_controller.isAnimating) _controller.stop();
       return widget.builder(context, 0);
     }
-    if (!_controller.isAnimating) _controller.repeat(reverse: widget.reverse);
 
     return AnimatedBuilder(
       animation: _controller,
@@ -1639,7 +1968,11 @@ class _KidLoopState extends State<KidLoop> with SingleTickerProviderStateMixin {
 /// The title emoji animation: `title-wiggle` / `buddy-wiggle` rotate -6° → 6°
 /// and grow to 1.12 at the top of each cycle.
 class KidWiggle extends StatelessWidget {
-  const KidWiggle({super.key, required this.child, this.period = const Duration(milliseconds: 2600)});
+  const KidWiggle({
+    super.key,
+    required this.child,
+    this.period = const Duration(milliseconds: 2600),
+  });
 
   final Widget child;
   final Duration period;

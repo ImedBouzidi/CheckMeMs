@@ -107,9 +107,10 @@ import { KidsLanguageService } from './kids-language.service';
       justify-content: center;
       padding: 16px;
       overflow-y: auto;
-      background: rgba(30, 41, 59, 0.55);
-      backdrop-filter: blur(6px);
+      background: rgba(15, 10, 32, 0.78);
+      backdrop-filter: blur(8px);
       animation: backdrop-in 0.2s ease;
+      font-family: 'Quicksand', 'Nunito', system-ui, sans-serif;
     }
 
     @keyframes backdrop-in {
@@ -119,14 +120,15 @@ import { KidsLanguageService } from './kids-language.service';
 
     .piece-modal {
       position: relative;
-      width: min(560px, 100%);
+      width: min(580px, 100%);
       max-height: calc(100vh - 32px);
       overflow-y: auto;
-      padding: 26px 26px 22px;
-      border: 4px solid #ffffff;
-      border-radius: 30px;
-      background: linear-gradient(160deg, #ffffff, #fdf2f8 55%, #eef2ff);
-      box-shadow: 0 16px 0 rgba(196, 181, 253, 0.85), 0 40px 70px -20px rgba(15, 23, 42, 0.6);
+      padding: 30px 28px 26px;
+      border: 3px solid #f5c45e;
+      border-radius: 32px;
+      background: linear-gradient(160deg, #29204b 0%, #1c1538 55%, #17112d 100%);
+      color: #fff9f0;
+      box-shadow: 0 16px 0 #120b24, 0 40px 70px -20px rgba(0, 0, 0, 0.8), 0 0 24px rgba(245, 196, 94, 0.35);
       animation: modal-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
@@ -140,44 +142,45 @@ import { KidsLanguageService } from './kids-language.service';
       top: 14px;
       right: 14px;
       z-index: 3;
-      width: 38px;
-      height: 38px;
+      width: 48px;
+      height: 48px;
       display: grid;
       place-items: center;
-      border: none;
+      border: 2px solid #f5c45e;
       border-radius: 50%;
       cursor: pointer;
-      font-family: inherit;
-      font-size: 1rem;
-      font-weight: 800;
-      color: #7c2d12;
-      background: #fef3c7;
-      box-shadow: 0 3px 0 #fcd34d;
+      font-family: 'Fredoka', 'Quicksand', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #211200;
+      background: linear-gradient(135deg, #f5c45e, #e5a82e);
+      box-shadow: 0 4px 0 #925807;
       transition: transform 0.18s ease, background 0.18s ease;
     }
 
     .modal-close:hover {
       transform: rotate(90deg) scale(1.08);
-      background: #fde68a;
+      filter: brightness(1.1);
     }
 
     .piece-modal-header {
       position: relative;
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding-right: 34px;
-      margin-bottom: 18px;
+      gap: 18px;
+      padding-right: 48px;
+      margin-bottom: 22px;
     }
 
     .modal-piece-halo {
       position: absolute;
       left: -12px;
       top: -14px;
-      width: 120px;
-      height: 120px;
+      width: 125px;
+      height: 125px;
       border-radius: 50%;
-      background: radial-gradient(circle, #fde68a 0%, #fbcfe8 55%, transparent 72%);
+      background: radial-gradient(circle, rgba(245, 196, 94, 0.4) 0%, rgba(183, 138, 255, 0.25) 55%, transparent 72%);
+      filter: blur(8px);
       animation: halo-pulse 3.5s ease-in-out infinite;
     }
 
@@ -189,10 +192,10 @@ import { KidsLanguageService } from './kids-language.service';
     .modal-piece-img {
       position: relative;
       flex-shrink: 0;
-      width: 96px;
-      height: 96px;
-      filter: drop-shadow(0 10px 12px rgba(99, 102, 241, 0.3));
-      animation: modal-piece-float 2.6s ease-in-out infinite;
+      width: 98px;
+      height: 98px;
+      filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 12px rgba(245, 196, 94, 0.4));
+      animation: modal-piece-float 2.8s ease-in-out infinite;
     }
 
     @keyframes modal-piece-float {
@@ -205,29 +208,33 @@ import { KidsLanguageService } from './kids-language.service';
     }
 
     .modal-emoji {
-      font-size: 1.2rem;
+      font-size: 1.4rem;
     }
 
     .modal-title-block h2 {
       margin: 2px 0 4px;
-      font-size: 2rem;
+      font-family: 'Fredoka', 'Quicksand', sans-serif;
+      font-size: 2.1rem;
       line-height: 1.1;
-      color: #1e293b;
+      font-weight: 700;
+      color: #fff9f0;
     }
 
     .modal-title-block p {
       margin: 0;
-      color: #64748b;
-      line-height: 1.4;
-      font-size: 0.92rem;
+      color: #d6ccf5;
+      line-height: 1.45;
+      font-size: 1rem;
+      font-weight: 600;
     }
 
-    /* ---- Mini board diagram ---- */
+    /* ---- Mini Board Diagram ---- */
     .mini-board-wrap {
-      background: #ffffff;
-      border-radius: 22px;
-      padding: 16px;
-      box-shadow: inset 0 0 0 3px #f3e8ff;
+      background: #1f173b;
+      border: 2px solid rgba(183, 138, 255, 0.35);
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.4);
     }
 
     .mini-board {
@@ -236,10 +243,10 @@ import { KidsLanguageService } from './kids-language.service';
       width: 100%;
       max-width: 320px;
       margin: 0 auto;
-      border: 4px solid #a78bfa;
-      border-radius: 14px;
+      border: 4px solid #352078;
+      border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 6px 0 rgba(167, 139, 250, 0.5);
+      box-shadow: 0 8px 0 #120b24, 0 0 16px rgba(183, 138, 255, 0.25);
     }
 
     .mini-square {
@@ -248,24 +255,24 @@ import { KidsLanguageService } from './kids-language.service';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #fff7cc;
+      background: #f1dccb;
     }
 
     .mini-square.dark {
-      background: #c4b5fd;
+      background: #9273b7;
     }
 
     .mini-square.center-square {
       background: #fef08a;
-      box-shadow: inset 0 0 0 3px #f59e0b;
+      box-shadow: inset 0 0 0 3px #f5c45e;
       z-index: 2;
     }
 
     .mini-piece {
       width: 78%;
       height: 78%;
-      filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.25));
-      animation: mini-piece-bob 1.8s ease-in-out infinite;
+      filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.4));
+      animation: mini-piece-bob 2s ease-in-out infinite;
     }
 
     @keyframes mini-piece-bob {
@@ -279,167 +286,175 @@ import { KidsLanguageService } from './kids-language.service';
       width: 64%;
       height: 64%;
       opacity: 0.95;
-      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
     }
 
     .mini-dot {
-      width: 32%;
-      height: 32%;
+      width: 34%;
+      height: 34%;
       border-radius: 50%;
-      background: #22c55e;
-      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.75);
-      animation: mini-dot-pulse 1.2s ease-in-out infinite;
+      background: #b78aff;
+      box-shadow: 0 0 0 3px rgba(255, 249, 240, 0.8), 0 0 8px #b78aff;
+      animation: mini-dot-pulse 1.4s ease-in-out infinite;
     }
 
     @keyframes mini-dot-pulse {
-      0%, 100% { transform: scale(0.85); opacity: 0.7; }
+      0%, 100% { transform: scale(0.85); opacity: 0.8; }
       50% { transform: scale(1.2); opacity: 1; }
     }
 
     .mini-square.capture-target::after {
       content: '';
       position: absolute;
-      inset: 7%;
+      inset: 8%;
       z-index: 2;
       border-radius: 50%;
-      border: 4px solid #ec4899;
-      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.75);
-      animation: mini-ring-pulse 1.2s ease-in-out infinite;
+      border: 3.5px solid #f5c45e;
+      box-shadow: 0 0 0 2px rgba(255, 249, 240, 0.8), 0 0 10px #f5c45e;
+      animation: mini-ring-pulse 1.4s ease-in-out infinite;
       pointer-events: none;
     }
 
     @keyframes mini-ring-pulse {
-      0%, 100% { transform: scale(0.92); opacity: 0.7; }
+      0%, 100% { transform: scale(0.92); opacity: 0.8; }
       50% { transform: scale(1.06); opacity: 1; }
     }
 
     .mini-legend {
       display: flex;
       justify-content: center;
-      gap: 18px;
+      gap: 20px;
       flex-wrap: wrap;
-      margin-top: 12px;
-      font-size: 0.82rem;
+      margin-top: 14px;
+      font-size: 0.9rem;
+      font-family: 'Quicksand', sans-serif;
       font-weight: 700;
-      color: #475569;
+      color: #d6ccf5;
     }
 
     .legend-item {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
     .legend-dot {
-      width: 12px;
-      height: 12px;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
-      background: #22c55e;
-      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
+      background: #b78aff;
+      box-shadow: 0 0 6px #b78aff;
     }
 
     .legend-ring {
-      width: 15px;
-      height: 15px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
-      border: 3px solid #ec4899;
+      border: 3px solid #f5c45e;
+      box-shadow: 0 0 6px #f5c45e;
     }
 
-    /* ---- Move / capture explanations ---- */
+    /* ---- Move / Capture Explanations ---- */
     .move-info-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-top: 16px;
+      gap: 14px;
+      margin-top: 18px;
     }
 
     .move-info {
       display: flex;
       align-items: flex-start;
-      gap: 10px;
-      padding: 14px;
-      border-radius: 16px;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 20px;
     }
 
     .move-box {
-      background: #ecfdf5;
-      border: 2px solid #a7f3d0;
+      background: #251c44;
+      border: 2px solid rgba(183, 138, 255, 0.45);
     }
 
     .capture-box {
-      background: #fdf2f8;
-      border: 2px solid #fbcfe8;
+      background: #2b1f48;
+      border: 2px solid rgba(245, 196, 94, 0.45);
     }
 
     .info-icon {
-      font-size: 1.35rem;
+      font-size: 1.5rem;
       line-height: 1;
     }
 
     .move-info strong {
       display: block;
-      font-size: 0.9rem;
-      color: #1e293b;
-      margin-bottom: 3px;
+      font-family: 'Fredoka', 'Quicksand', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff9f0;
+      margin-bottom: 4px;
     }
 
     .move-info p {
       margin: 0;
-      font-size: 0.85rem;
-      line-height: 1.4;
-      color: #475569;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 600;
+      line-height: 1.45;
+      color: #d6ccf5;
     }
 
     /* ---- Actions ---- */
     .modal-actions {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-top: 16px;
+      gap: 12px;
+      margin-top: 20px;
     }
 
     .try-me-btn,
     .got-it-btn {
       width: 100%;
+      min-height: 52px;
       border: none;
       cursor: pointer;
-      font-family: inherit;
-      font-size: 1.05rem;
-      font-weight: 800;
-      padding: 13px;
-      border-radius: 16px;
-      transition: transform 0.15s ease, filter 0.15s ease;
+      font-family: 'Fredoka', 'Quicksand', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      padding: 14px;
+      border-radius: 20px;
+      transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
     }
 
     .try-me-btn {
-      color: #ffffff;
-      background: linear-gradient(135deg, #22c55e, #06b6d4);
-      box-shadow: 0 6px 0 #15803d;
-      animation: try-me-pulse 1.8s ease-in-out infinite;
+      color: #211200;
+      background: linear-gradient(135deg, #f5c45e, #e5a82e);
+      box-shadow: 0 6px 0 #925807, 0 10px 20px rgba(245, 196, 94, 0.4);
+      animation: try-me-pulse 2s ease-in-out infinite;
     }
 
     @keyframes try-me-pulse {
       0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-2px); }
+      50% { transform: translateY(-3px); }
     }
 
     .got-it-btn {
-      color: #ffffff;
-      background: linear-gradient(135deg, #8b5cf6, #ec4899);
-      box-shadow: 0 6px 0 #6d28d9;
+      color: #fff9f0;
+      background: linear-gradient(135deg, #4f46e5, #352078);
+      border: 2px solid rgba(183, 138, 255, 0.4);
+      box-shadow: 0 6px 0 #1b1338;
     }
 
     .got-it-btn.secondary {
-      color: #6d28d9;
-      background: #ffffff;
-      border: 2px solid #ddd6fe;
-      box-shadow: 0 5px 0 #ddd6fe;
+      color: #fff9f0;
+      background: #251c44;
+      border: 2px solid #b78aff;
+      box-shadow: 0 5px 0 #120b24;
     }
 
     .try-me-btn:hover,
     .got-it-btn:hover {
       transform: translateY(-2px);
-      filter: brightness(1.05);
+      filter: brightness(1.08);
     }
 
     .try-me-btn:active,
@@ -448,42 +463,34 @@ import { KidsLanguageService } from './kids-language.service';
       box-shadow: none;
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 520px) {
       .piece-modal {
-        padding: 20px 16px 18px;
-        border-radius: 24px;
-      }
-      .piece-modal-header {
-        gap: 12px;
-        padding-right: 30px;
-      }
-      .modal-piece-img {
-        width: 72px;
-        height: 72px;
-      }
-      .modal-title-block h2 {
-        font-size: 1.6rem;
-      }
-      .mini-board-wrap {
-        padding: 12px;
+        padding: 22px 18px 20px;
+        border-radius: 26px;
       }
       .move-info-grid {
         grid-template-columns: 1fr;
+      }
+      .modal-piece-img {
+        width: 74px;
+        height: 74px;
+      }
+      .modal-title-block h2 {
+        font-size: 1.7rem;
       }
     }
 
     @media (prefers-reduced-motion: reduce) {
       .piece-modal,
-      .piece-modal-backdrop,
       .modal-piece-img,
       .modal-piece-halo,
       .mini-piece,
       .mini-dot,
-      .mini-square.capture-target::after,
       .try-me-btn {
         animation: none !important;
       }
     }
+
   `]
 })
 export class KidsPiecePopupComponent {

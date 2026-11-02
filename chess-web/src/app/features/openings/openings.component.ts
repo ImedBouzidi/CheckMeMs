@@ -131,9 +131,9 @@ import { LanguageService } from '../../core/i18n/language.service';
 
     .explorer-panel,
     .line-preview {
-      border: 1px solid #dbe3ee;
-      border-radius: 24px;
-      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid var(--cm-line);
+      border-radius: 20px;
+      background: var(--cm-surface);
       box-shadow: var(--cm-shadow-sm);
     }
 
@@ -155,10 +155,10 @@ import { LanguageService } from '../../core/i18n/language.service';
       gap: 9px;
       min-height: 42px;
       padding: 0 13px;
-      border: 1px solid #dbe3ee;
+      border: 1px solid var(--cm-line);
       border-radius: 12px;
-      background: #f8fafc;
-      color: var(--cm-muted-light);
+      background: var(--cm-surface-muted);
+      color: var(--cm-muted);
       font-size: 0.82rem;
     }
 

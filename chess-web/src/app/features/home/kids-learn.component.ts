@@ -218,14 +218,16 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
     :host {
       display: block;
       min-height: 100vh;
+      font-family: 'Quicksand', 'Nunito', system-ui, sans-serif;
     }
 
     .learn-world {
       position: relative;
       min-height: 100vh;
       overflow: hidden;
-      color: #1e293b;
-      background: linear-gradient(145deg, #eef2ff 0%, #fdf2f8 55%, #ecfeff 100%);
+      background: radial-gradient(circle at 75% 20%, #2a1a5e 0%, #17112d 55%, #0f0a20 100%);
+      background-attachment: fixed;
+      color: #fff9f0;
     }
 
     /* ---- Background ---- */
@@ -239,47 +241,49 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
 
     .sky-emoji {
       position: absolute;
-      font-size: 28px;
-      opacity: 0.65;
-      animation: sky-float 7s ease-in-out infinite;
+      font-size: 26px;
+      opacity: 0.5;
+      filter: drop-shadow(0 0 10px rgba(245, 196, 94, 0.6));
+      animation: emoji-float 8s ease-in-out infinite;
     }
-    .se1 { top: 12%; left: 5%; }
-    .se2 { top: 46%; right: 6%; animation-delay: 1.2s; font-size: 22px; }
-    .se3 { bottom: 16%; left: 9%; animation-delay: 2.4s; font-size: 34px; }
-    .se4 { top: 72%; right: 12%; animation-delay: 3.2s; }
+    .se1 { top: 12%; left: 8%; }
+    .se2 { top: 22%; right: 14%; animation-delay: 1.5s; font-size: 30px; }
+    .se3 { top: 62%; left: 5%; animation-delay: 3s; font-size: 34px; opacity: 0.2; }
+    .se4 { bottom: 16%; right: 8%; animation-delay: 2s; font-size: 32px; }
 
-    @keyframes sky-float {
+    @keyframes emoji-float {
       0%, 100% { transform: translateY(0) rotate(-6deg); }
-      50% { transform: translateY(-18px) rotate(7deg); }
+      50% { transform: translateY(-18px) rotate(8deg); }
     }
 
     .sky-piece {
       position: absolute;
-      width: 48px;
-      height: 48px;
+      width: 50px;
+      height: 50px;
       opacity: 0.2;
-      animation: sky-piece-drift 11s ease-in-out infinite;
+      filter: drop-shadow(0 0 12px rgba(183, 138, 255, 0.4));
+      animation: piece-drift 12s ease-in-out infinite;
     }
-    .sp1 { top: 20%; right: 3%; }
-    .sp2 { bottom: 28%; left: 3%; animation-delay: 2s; }
-    .sp3 { top: 58%; right: 18%; width: 38px; height: 38px; animation-delay: 3.5s; }
+    .sp1 { top: 18%; right: 4%; }
+    .sp2 { bottom: 22%; left: 3%; animation-delay: 2s; width: 44px; height: 44px; }
+    .sp3 { top: 55%; right: 6%; animation-delay: 4s; }
 
-    @keyframes sky-piece-drift {
-      0%, 100% { transform: translateY(0) rotate(-9deg); }
-      50% { transform: translateY(-20px) rotate(9deg); }
+    @keyframes piece-drift {
+      0%, 100% { transform: translateY(0) rotate(-8deg); }
+      50% { transform: translateY(-20px) rotate(8deg); }
     }
 
-    /* ---- Header ---- */
+    /* ---- Royal Header ---- */
     .learn-header {
       position: relative;
-      z-index: 5;
+      z-index: 10;
       max-width: 1180px;
       margin: 0 auto;
-      padding: 18px 22px 0;
+      padding: 20px 22px 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 14px;
       flex-wrap: wrap;
     }
 
@@ -287,33 +291,40 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
     .clear-pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      border: none;
+      justify-content: center;
+      gap: 8px;
+      min-height: 48px;
+      min-width: 48px;
+      border: 2px solid rgba(183, 138, 255, 0.4);
       cursor: pointer;
-      font-family: inherit;
-      font-weight: 800;
-      font-size: 0.95rem;
+      font-family: 'Fredoka', 'Quicksand', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
       text-decoration: none;
-      padding: 10px 16px;
+      padding: 10px 18px;
       border-radius: 999px;
-      box-shadow: 0 4px 0 rgba(148, 163, 184, 0.35);
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 4px 0 #1b1338;
+      backdrop-filter: blur(8px);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
     }
 
     .home-pill {
-      color: #7c2d12;
-      background: #ffffff;
+      color: #fff9f0;
+      background: rgba(41, 32, 75, 0.85);
     }
 
     .clear-pill {
-      color: #9d174d;
-      background: #fce7f3;
+      color: #fff9f0;
+      background: rgba(53, 32, 120, 0.85);
+      border-color: rgba(245, 196, 94, 0.4);
     }
 
     .home-pill:hover,
     .clear-pill:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 0 rgba(148, 163, 184, 0.35);
+      border-color: #f5c45e;
+      background: rgba(53, 32, 120, 0.95);
+      box-shadow: 0 6px 0 #1b1338, 0 0 12px rgba(245, 196, 94, 0.35);
     }
 
     .header-actions {
@@ -326,14 +337,17 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
     .language-picker {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 8px 12px;
+      gap: 8px;
+      min-height: 48px;
+      padding: 8px 14px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.82);
-      box-shadow: 0 4px 0 rgba(196, 181, 253, 0.6);
-      color: #6d28d9;
-      font-weight: 800;
-      font-size: 0.9rem;
+      border: 2px solid rgba(183, 138, 255, 0.4);
+      background: rgba(41, 32, 75, 0.85);
+      box-shadow: 0 4px 0 #1b1338;
+      color: #f5c45e;
+      font-family: 'Fredoka', 'Quicksand', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
     }
 
     .language-picker .language-label {
@@ -344,46 +358,50 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
       border: none;
       background: transparent;
       font-family: inherit;
-      font-weight: 800;
-      font-size: 0.9rem;
-      color: #6d28d9;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #fff9f0;
       cursor: pointer;
       outline: none;
-      padding: 2px;
+      padding: 4px;
       border-radius: 8px;
     }
 
     .language-select:focus-visible {
-      outline: 2px solid #8b5cf6;
+      outline: 2px solid #f5c45e;
       outline-offset: 2px;
     }
 
     .language-select option {
-      color: #1e293b;
-      background: #ffffff;
+      color: #fff9f0;
+      background: #29204b;
     }
 
     .learn-title {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 9px 18px;
+      gap: 10px;
+      min-height: 48px;
+      padding: 10px 20px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.72);
-      box-shadow: 0 4px 0 rgba(196, 181, 253, 0.6);
-      font-size: 1.2rem;
+      background: rgba(41, 32, 75, 0.85);
+      border: 2px solid rgba(183, 138, 255, 0.45);
+      box-shadow: 0 4px 0 #1b1338;
+      font-family: 'Fredoka', 'Quicksand', sans-serif;
+      font-size: 1.25rem;
       font-weight: 700;
+      color: #fff9f0;
     }
 
     .learn-title strong {
-      background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6);
+      background: linear-gradient(90deg, #f5c45e, #b78aff, #ffffff);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
     }
 
     .title-icon {
-      font-size: 1.45rem;
+      font-size: 1.55rem;
       animation: title-wiggle 2.6s ease-in-out infinite;
     }
 
@@ -395,13 +413,13 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
     /* ---- Stage ---- */
     .learn-stage {
       position: relative;
-      z-index: 5;
+      z-index: 10;
       max-width: 1180px;
       margin: 0 auto;
-      padding: 26px 22px 40px;
+      padding: 26px 22px 48px;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 300px;
-      gap: 26px;
+      grid-template-columns: minmax(0, 1fr) 310px;
+      gap: 28px;
       align-items: start;
     }
 
@@ -412,25 +430,26 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
       margin: 0 auto;
     }
 
-    /* ---- Instructor ---- */
+    /* ---- Instructor / Coach Owl ---- */
     .coach-row {
       display: flex;
       align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 12px;
+      gap: 14px;
+      margin-bottom: 14px;
     }
 
     .coach-avatar {
       position: relative;
       flex-shrink: 0;
-      width: 60px;
-      height: 60px;
+      width: 66px;
+      height: 66px;
       display: grid;
       place-items: center;
-      font-size: 2rem;
+      font-size: 2.2rem;
       border-radius: 50%;
-      background: linear-gradient(145deg, #a5f3fc, #bae6fd);
-      box-shadow: 0 6px 0 #38bdf8, 0 10px 18px -8px rgba(56, 189, 248, 0.65);
+      background: linear-gradient(145deg, #352078, #29204b);
+      border: 2px solid #f5c45e;
+      box-shadow: 0 6px 0 #1b1338, 0 0 16px rgba(245, 196, 94, 0.4);
       animation: coach-bob 2.8s ease-in-out infinite;
     }
 
@@ -452,11 +471,11 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
       position: absolute;
       right: 3px;
       bottom: 2px;
-      width: 12px;
-      height: 12px;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
-      background: #22c55e;
-      border: 2px solid #ffffff;
+      background: #10b981;
+      border: 2px solid #fff9f0;
     }
 
     .coach-main {
@@ -467,51 +486,55 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
     .coach-meta {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin: 0 0 4px 6px;
+      gap: 10px;
+      margin: 0 0 6px 6px;
     }
 
     .coach-name {
-      font-size: 0.76rem;
-      font-weight: 900;
-      letter-spacing: 0.07em;
+      font-family: 'Fredoka', 'Quicksand', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #0369a1;
+      color: #f5c45e;
     }
 
     .voice-toggle {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       display: grid;
       place-items: center;
-      border: none;
+      border: 1px solid rgba(183, 138, 255, 0.4);
       border-radius: 50%;
       cursor: pointer;
-      font-size: 0.9rem;
-      background: #e0f2fe;
-      box-shadow: 0 2px 0 #bae6fd;
+      font-size: 0.95rem;
+      color: #fff9f0;
+      background: #29204b;
+      box-shadow: 0 2px 0 #120b24;
       transition: transform 0.15s ease, background 0.15s ease;
     }
 
     .voice-toggle:hover {
       transform: scale(1.1);
-      background: #bae6fd;
+      background: #352078;
+      border-color: #f5c45e;
     }
 
     .coach-bubble {
-      min-height: 58px;
+      min-height: 62px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 12px 14px 12px 18px;
-      border: 3px solid #bae6fd;
-      border-radius: 20px 20px 20px 6px;
-      background: #ffffff;
-      box-shadow: 0 6px 0 rgba(125, 211, 252, 0.45);
-      color: #0369a1;
-      font-size: 1rem;
+      gap: 12px;
+      padding: 14px 18px;
+      border: 2px solid rgba(183, 138, 255, 0.45);
+      border-radius: 22px 22px 22px 6px;
+      background: #29204b;
+      box-shadow: 0 6px 0 #130c26, 0 10px 20px rgba(0, 0, 0, 0.4);
+      color: #fff9f0;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 1.05rem;
       font-weight: 700;
-      line-height: 1.35;
+      line-height: 1.45;
       animation: coach-bubble-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
@@ -522,22 +545,24 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
 
     .speak-btn {
       flex-shrink: 0;
-      width: 34px;
-      height: 34px;
+      width: 44px;
+      height: 44px;
       display: grid;
       place-items: center;
-      border: none;
+      border: 2px solid rgba(245, 196, 94, 0.5);
       border-radius: 50%;
       cursor: pointer;
-      font-size: 1rem;
-      background: #e0f2fe;
-      box-shadow: 0 2px 0 #bae6fd;
+      font-size: 1.15rem;
+      color: #fff9f0;
+      background: linear-gradient(135deg, #352078, #29204b);
+      box-shadow: 0 3px 0 #120b24;
       transition: transform 0.15s ease, background 0.15s ease;
     }
 
     .speak-btn:hover {
       transform: scale(1.1) rotate(-6deg);
-      background: #bae6fd;
+      border-color: #f5c45e;
+      box-shadow: 0 4px 0 #120b24, 0 0 10px rgba(245, 196, 94, 0.5);
     }
 
     @keyframes coach-bubble-pop {
@@ -545,40 +570,44 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
       100% { transform: scale(1); opacity: 1; }
     }
 
-    /* ---- Possible-square legend ---- */
+    /* ---- Possible-square Legend ---- */
     .legend-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 7px;
-      margin: 0 0 12px 72px;
+      gap: 8px;
+      margin: 0 0 14px 74px;
       animation: coach-bubble-pop 0.35s ease;
     }
 
     .legend-chip {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 5px 10px;
+      gap: 7px;
+      padding: 6px 12px;
       border-radius: 999px;
-      border: 2px solid #ffffff;
-      background: rgba(255, 255, 255, 0.88);
-      box-shadow: 0 3px 0 rgba(148, 163, 184, 0.22);
-      font-size: 0.76rem;
-      font-weight: 800;
-      color: #475569;
+      border: 1.5px solid rgba(183, 138, 255, 0.4);
+      background: rgba(41, 32, 75, 0.9);
+      box-shadow: 0 3px 0 #120b24;
+      font-family: 'Fredoka', 'Quicksand', sans-serif;
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: #fff9f0;
     }
 
     .legend-chip.move {
-      color: #15803d;
+      color: #b78aff;
+      border-color: #b78aff;
     }
 
     .legend-chip.capture {
-      color: #be185d;
+      color: #f5c45e;
+      border-color: #f5c45e;
     }
 
     .legend-chip.count {
-      color: #6d28d9;
-      background: #f5f3ff;
+      color: #f5c45e;
+      background: rgba(53, 32, 120, 0.9);
+      border-color: #f5c45e;
     }
 
     .legend-swatch {
@@ -588,165 +617,177 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
     }
 
     .legend-swatch.move {
-      background: #22c55e;
-      opacity: 0.7;
+      background: #b78aff;
+      box-shadow: 0 0 6px #b78aff;
     }
 
     .legend-swatch.capture {
-      background: #ec4899;
-      opacity: 0.75;
+      background: #f5c45e;
+      box-shadow: 0 0 6px #f5c45e;
     }
 
-    /* ---- Board frame ---- */
+    /* ---- Board Frame ---- */
     .board-frame {
       position: relative;
-      padding: 14px;
-      border-radius: 30px;
-      background: linear-gradient(145deg, #bae6fd, #c4b5fd 48%, #fbcfe8);
-      box-shadow: 0 12px 0 #a78bfa, 0 26px 45px -18px rgba(139, 92, 246, 0.65);
+      padding: 16px;
+      border-radius: 32px;
+      background: linear-gradient(150deg, #352078 0%, #29204b 50%, #1c1538 100%);
+      border: 3px solid #f5c45e;
+      box-shadow: 0 16px 0 #120b24, 0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 24px rgba(245, 196, 94, 0.35);
       transition: box-shadow 0.3s ease;
     }
 
     .board-frame.try-active {
-      box-shadow: 0 12px 0 #34d399, 0 26px 45px -18px rgba(16, 185, 129, 0.65);
+      box-shadow: 0 16px 0 #120b24, 0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 32px rgba(183, 138, 255, 0.6);
       animation: frame-glow-learn 2s ease-in-out infinite;
     }
 
     @keyframes frame-glow-learn {
       0%, 100% { filter: brightness(1); }
-      50% { filter: brightness(1.05); }
+      50% { filter: brightness(1.08); }
     }
 
     .frame-sparkles span {
       position: absolute;
-      width: 11px;
-      height: 11px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.85);
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
+      background: #f5c45e;
+      box-shadow: 0 0 10px rgba(245, 196, 94, 0.9);
       animation: sparkle-twinkle 2.4s ease-in-out infinite;
     }
-    .frame-sparkles span:nth-child(1) { top: 8px; left: 20px; }
-    .frame-sparkles span:nth-child(2) { top: 8px; right: 20px; animation-delay: 0.6s; }
-    .frame-sparkles span:nth-child(3) { bottom: 8px; left: 20px; animation-delay: 1.2s; }
-    .frame-sparkles span:nth-child(4) { bottom: 8px; right: 20px; animation-delay: 1.8s; }
+    .frame-sparkles span:nth-child(1) { top: 10px; left: 24px; }
+    .frame-sparkles span:nth-child(2) { top: 10px; right: 24px; animation-delay: 0.6s; }
+    .frame-sparkles span:nth-child(3) { bottom: 10px; left: 24px; animation-delay: 1.2s; }
+    .frame-sparkles span:nth-child(4) { bottom: 10px; right: 24px; animation-delay: 1.8s; }
 
     @keyframes sparkle-twinkle {
-      0%, 100% { opacity: 0.35; transform: scale(0.8); }
-      50% { opacity: 1; transform: scale(1.15); }
+      0%, 100% { opacity: 0.4; transform: scale(0.85); }
+      50% { opacity: 1; transform: scale(1.2); }
     }
 
     .learn-board {
       width: 100%;
       aspect-ratio: 1;
-      border-radius: 18px;
+      border-radius: 20px;
       overflow: hidden;
-      background: #fff7cc;
-      box-shadow: inset 0 0 0 4px #ffffff;
+      background: #17112d;
+      box-shadow: inset 0 0 0 4px #352078;
     }
 
-    /* ---- Practice info ---- */
+    /* ---- Practice Info ---- */
     .practice-bar {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-top: 14px;
-      min-height: 50px;
+      gap: 12px;
+      margin-top: 16px;
+      min-height: 52px;
     }
 
     .practice-chip {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
+      gap: 10px;
+      min-height: 48px;
+      padding: 8px 18px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.85);
-      border: 3px solid #ffffff;
-      box-shadow: 0 5px 0 rgba(167, 243, 208, 0.7);
-      color: #14532d;
-      font-weight: 800;
-      font-size: 0.95rem;
+      background: rgba(41, 32, 75, 0.9);
+      border: 2px solid rgba(183, 138, 255, 0.4);
+      box-shadow: 0 4px 0 #120b24;
+      color: #fff9f0;
+      font-family: 'Fredoka', 'Quicksand', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
     }
 
     .practice-chip img {
-      width: 30px;
-      height: 30px;
+      width: 32px;
+      height: 32px;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
     }
 
     .practice-chip.empty {
-      color: #64748b;
-      box-shadow: 0 5px 0 rgba(226, 232, 240, 0.9);
-      font-weight: 700;
+      color: #b78aff;
+      box-shadow: 0 4px 0 #120b24;
+      font-weight: 600;
     }
 
     .small-clear-btn {
       margin-left: auto;
-      border: none;
+      min-height: 48px;
+      border: 2px solid rgba(245, 196, 94, 0.4);
       cursor: pointer;
-      font-family: inherit;
-      font-weight: 800;
-      font-size: 0.9rem;
-      color: #9d174d;
-      background: #fce7f3;
-      padding: 9px 16px;
+      font-family: 'Fredoka', 'Quicksand', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #fff9f0;
+      background: #352078;
+      padding: 10px 18px;
       border-radius: 999px;
-      box-shadow: 0 4px 0 #fbcfe8;
-      transition: transform 0.14s ease;
+      box-shadow: 0 4px 0 #120b24;
+      transition: transform 0.14s ease, border-color 0.14s ease;
     }
 
     .small-clear-btn:hover {
       transform: translateY(-2px);
+      border-color: #f5c45e;
+      box-shadow: 0 6px 0 #120b24, 0 0 10px rgba(245, 196, 94, 0.4);
     }
 
     /* ---- Sidebar ---- */
     .piece-sidebar {
       position: sticky;
-      top: 18px;
+      top: 20px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      padding: 20px;
-      border: 3px solid #ffffff;
-      border-radius: 28px;
-      background: rgba(255, 255, 255, 0.8);
-      box-shadow: 0 10px 0 rgba(224, 231, 255, 0.9), 0 22px 40px -22px rgba(99, 102, 241, 0.45);
-      backdrop-filter: blur(6px);
+      gap: 12px;
+      padding: 24px 20px;
+      border: 3px solid rgba(183, 138, 255, 0.4);
+      border-radius: 30px;
+      background: linear-gradient(150deg, rgba(41, 32, 75, 0.9), rgba(23, 17, 45, 0.95));
+      box-shadow: 0 10px 0 #130c26, 0 22px 40px -22px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
     }
 
     .piece-sidebar h2 {
       margin: 0;
-      font-size: 1.25rem;
-      color: #1e293b;
+      font-family: 'Fredoka', 'Quicksand', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #fff9f0;
     }
 
     .piece-sidebar > p {
       margin: 0 0 6px;
-      color: #64748b;
-      font-size: 0.86rem;
-      line-height: 1.4;
+      color: #b78aff;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 600;
+      line-height: 1.45;
     }
 
     .sidebar-list {
       display: flex;
       flex-direction: column;
-      gap: 9px;
+      gap: 10px;
     }
 
     .sidebar-piece {
-      --piece-color: #bbf7d0;
+      --piece-color: #352078;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      min-height: 58px;
       width: 100%;
       text-align: left;
       font-family: inherit;
       cursor: pointer;
-      border: 3px solid #ffffff;
-      border-radius: 18px;
-      padding: 9px 12px 9px 9px;
-      background: linear-gradient(135deg, #ffffff, var(--piece-color));
-      box-shadow: 0 5px 0 rgba(148, 163, 184, 0.3);
-      transition: transform 0.16s ease, box-shadow 0.16s ease;
+      border: 2px solid rgba(183, 138, 255, 0.35);
+      border-radius: 20px;
+      padding: 8px 14px 8px 10px;
+      background: linear-gradient(135deg, #2b2050, #1c1538);
+      box-shadow: 0 5px 0 #120b24;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
       animation: piece-slide-in 0.45s ease both;
     }
 
@@ -757,29 +798,32 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
 
     .sidebar-piece:hover {
       transform: translateY(-3px) translateX(-2px);
-      box-shadow: 0 8px 0 rgba(148, 163, 184, 0.3);
+      border-color: #f5c45e;
+      box-shadow: 0 8px 0 #120b24, 0 0 14px rgba(245, 196, 94, 0.3);
     }
 
     .sidebar-piece.active {
-      border-color: #34d399;
-      box-shadow: 0 6px 0 #34d399, 0 0 0 3px rgba(52, 211, 153, 0.22);
+      border-color: #f5c45e;
+      background: linear-gradient(135deg, #352078, #2a1860);
+      box-shadow: 0 6px 0 #120b24, 0 0 0 3px rgba(245, 196, 94, 0.35);
       transform: translateY(-2px);
     }
 
     .piece-thumb {
       flex-shrink: 0;
-      width: 46px;
-      height: 46px;
+      width: 48px;
+      height: 48px;
       display: grid;
       place-items: center;
       border-radius: 14px;
-      background: rgba(255, 255, 255, 0.7);
+      background: rgba(53, 32, 120, 0.6);
+      border: 1px solid rgba(183, 138, 255, 0.3);
     }
 
     .piece-thumb img {
-      width: 38px;
-      height: 38px;
-      filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.18));
+      width: 40px;
+      height: 40px;
+      filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.4));
       transition: transform 0.16s ease;
     }
 
@@ -790,49 +834,54 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
     .piece-info {
       display: flex;
       flex-direction: column;
-      gap: 1px;
+      gap: 2px;
       min-width: 0;
     }
 
     .piece-info strong {
-      font-size: 1rem;
-      color: #1e293b;
+      font-family: 'Fredoka', 'Quicksand', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff9f0;
     }
 
     .piece-info small {
-      font-size: 0.76rem;
-      font-weight: 700;
-      color: #64748b;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #d6ccf5;
     }
 
     .piece-go {
       margin-left: auto;
       font-size: 1.5rem;
       font-weight: 800;
-      color: #94a3b8;
+      color: #b78aff;
       transition: transform 0.16s ease, color 0.16s ease;
     }
 
     .sidebar-piece:hover .piece-go {
-      color: #8b5cf6;
+      color: #f5c45e;
       transform: translateX(3px);
     }
 
     .sidebar-note {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       align-items: flex-start;
-      margin-top: 4px;
-      padding: 12px;
-      border-radius: 16px;
-      background: #fef3c7;
-      color: #92400e;
-      font-size: 0.82rem;
-      line-height: 1.4;
+      margin-top: 6px;
+      padding: 14px;
+      border-radius: 18px;
+      background: #251c44;
+      border: 1px solid rgba(245, 196, 94, 0.4);
+      color: #fff9f0;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.88rem;
+      line-height: 1.45;
     }
 
     .sidebar-note span {
-      font-size: 1.2rem;
+      font-size: 1.35rem;
       line-height: 1;
     }
 
@@ -840,33 +889,36 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
       margin: 0;
     }
 
-    /* ---- Good move / wrong move dialogue ---- */
+    /* ---- Feedback Dialogue ---- */
     .feedback-dialogue {
       position: fixed;
       left: 50%;
-      bottom: 22px;
+      bottom: 24px;
       z-index: 1200;
-      width: min(470px, calc(100vw - 28px));
+      width: min(480px, calc(100vw - 28px));
+      min-height: 56px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 14px 14px 14px 16px;
-      border: 3px solid #ffffff;
-      border-radius: 22px;
+      gap: 14px;
+      padding: 16px 18px;
+      border-radius: 24px;
       transform: translateX(-50%);
       animation: feedback-pop 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+      font-family: 'Quicksand', sans-serif;
     }
 
     .feedback-dialogue.good {
-      background: linear-gradient(135deg, #dcfce7, #bbf7d0);
-      color: #14532d;
-      box-shadow: 0 7px 0 #86efac, 0 20px 35px -15px rgba(22, 163, 74, 0.55);
+      background: linear-gradient(135deg, #065f46, #047857);
+      color: #fff9f0;
+      border: 2px solid #34d399;
+      box-shadow: 0 8px 0 #064e3b, 0 20px 35px -15px rgba(0, 0, 0, 0.7), 0 0 20px rgba(52, 211, 153, 0.4);
     }
 
     .feedback-dialogue.wrong {
-      background: linear-gradient(135deg, #ffe4e6, #fecdd3);
-      color: #881337;
-      box-shadow: 0 7px 0 #fda4af, 0 20px 35px -15px rgba(225, 29, 72, 0.5);
+      background: linear-gradient(135deg, #881337, #9f1239);
+      color: #fff9f0;
+      border: 2px solid #fb7185;
+      box-shadow: 0 8px 0 #4c0519, 0 20px 35px -15px rgba(0, 0, 0, 0.7), 0 0 20px rgba(251, 113, 133, 0.4);
     }
 
     @keyframes feedback-pop {
@@ -876,7 +928,7 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
 
     .feedback-emoji {
       flex-shrink: 0;
-      font-size: 1.85rem;
+      font-size: 2rem;
       line-height: 1;
     }
 
@@ -889,61 +941,70 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
     }
 
     .feedback-copy strong {
-      font-size: 1.06rem;
-      font-weight: 900;
+      font-family: 'Fredoka', 'Quicksand', sans-serif;
+      font-size: 1.12rem;
+      font-weight: 700;
     }
 
     .feedback-copy span {
-      font-size: 0.87rem;
-      line-height: 1.3;
+      font-size: 0.92rem;
+      line-height: 1.35;
       font-weight: 600;
     }
 
     .feedback-close {
       flex-shrink: 0;
-      width: 30px;
-      height: 30px;
+      width: 44px;
+      height: 44px;
       display: grid;
       place-items: center;
       border: none;
       border-radius: 50%;
       cursor: pointer;
-      font-family: inherit;
-      font-size: 0.8rem;
-      font-weight: 900;
+      font-family: 'Fredoka', 'Quicksand', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
       color: inherit;
-      background: rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.2);
       transition: transform 0.15s ease;
     }
 
     .feedback-close:hover {
-      transform: rotate(90deg) scale(1.08);
+      transform: rotate(90deg) scale(1.1);
+      background: rgba(255, 255, 255, 0.3);
     }
 
     /* ---- Footer ---- */
     .learn-footer {
       position: relative;
-      z-index: 5;
+      z-index: 10;
       max-width: 1180px;
       margin: 0 auto;
-      padding: 0 22px 28px;
+      padding: 0 22px 34px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 14px;
       flex-wrap: wrap;
-      color: #64748b;
-      font-size: 0.9rem;
+      color: #b78aff;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.98rem;
+      font-weight: 600;
     }
 
     .learn-footer a {
-      color: #7c3aed;
+      color: #f5c45e;
+      font-family: 'Fredoka', 'Quicksand', sans-serif;
       font-weight: 700;
       text-decoration: none;
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
     }
 
     .learn-footer a:hover {
       text-decoration: underline;
+      filter: drop-shadow(0 0 6px rgba(245, 196, 94, 0.5));
     }
 
     /* ---- Responsive ---- */
@@ -964,7 +1025,7 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
     @media (max-width: 600px) {
       .learn-header {
         justify-content: center;
-        padding-top: 12px;
+        padding-top: 14px;
       }
       .learn-title {
         order: -1;
@@ -972,38 +1033,29 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
         justify-content: center;
       }
       .learn-stage {
-        padding: 18px 12px 30px;
-        gap: 18px;
+        padding: 20px 14px 34px;
+        gap: 20px;
       }
       .coach-bubble {
-        font-size: 0.9rem;
-        min-height: 52px;
-        padding: 10px 14px;
+        font-size: 0.96rem;
+        min-height: 56px;
+        padding: 12px 16px;
       }
       .coach-avatar {
-        width: 50px;
-        height: 50px;
-        font-size: 1.7rem;
+        width: 54px;
+        height: 54px;
+        font-size: 1.8rem;
       }
       .legend-row {
-        margin: 0 0 12px;
+        margin: 0 0 14px;
       }
       .feedback-dialogue {
-        bottom: 14px;
-        padding: 12px;
-      }
-      .feedback-emoji {
-        font-size: 1.55rem;
-      }
-      .feedback-copy strong {
-        font-size: 1rem;
-      }
-      .feedback-copy span {
-        font-size: 0.8rem;
+        bottom: 16px;
+        padding: 14px;
       }
       .board-frame {
-        padding: 9px;
-        border-radius: 22px;
+        padding: 10px;
+        border-radius: 24px;
       }
       .practice-bar {
         flex-wrap: wrap;
@@ -1012,7 +1064,7 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
         grid-template-columns: 1fr;
       }
       .piece-sidebar {
-        padding: 16px;
+        padding: 18px;
       }
       .learn-footer {
         justify-content: center;
@@ -1021,20 +1073,18 @@ const LEARN_CAPTURE_MARKER = { class: 'marker-learn-capture', slice: 'markerSqua
     }
 
     @media (prefers-reduced-motion: reduce) {
+      .learn-world,
       .sky-emoji,
       .sky-piece,
-      .title-icon,
-      .coach-avatar,
-      .coach-avatar.talking,
-      .coach-bubble,
-      .legend-row,
-      .feedback-dialogue,
       .frame-sparkles span,
-      .board-frame.try-active,
+      .coach-avatar,
+      .title-icon,
+      .practice-chip,
       .sidebar-piece {
         animation: none !important;
       }
     }
+
   `]
 })
 export class KidsLearnComponent implements AfterViewInit, OnDestroy {

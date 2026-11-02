@@ -141,14 +141,14 @@ import { PlayVsBotDialogComponent, BotDialogResult } from './play-vs-bot-dialog.
       gap: 28px;
       overflow: hidden;
       padding: clamp(28px, 5vw, 48px);
-      border: 1px solid rgba(148, 163, 184, 0.16);
-      border-radius: 28px;
+      border: 1px solid var(--cm-line);
+      border-radius: 24px;
       background:
-        radial-gradient(460px 280px at 100% 0%, rgba(37, 99, 235, 0.38), transparent 70%),
-        radial-gradient(300px 220px at 0% 100%, rgba(8, 145, 178, 0.18), transparent 72%),
-        linear-gradient(135deg, #111c30, #0f172a 56%, #172554);
-      box-shadow: 0 34px 80px -42px rgba(15, 23, 42, 0.9);
-      color: #f8fafc;
+        radial-gradient(460px 280px at 100% 0%, rgba(101, 41, 216, 0.35), transparent 70%),
+        radial-gradient(300px 220px at 0% 100%, rgba(0, 217, 255, 0.2), transparent 72%),
+        linear-gradient(135deg, #1d2942 0%, #101629 100%);
+      box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 217, 255, 0.1);
+      color: #f4f7ff;
     }
 
     .engine-match::before {
@@ -234,10 +234,12 @@ import { PlayVsBotDialogComponent, BotDialogResult } from './play-vs-bot-dialog.
     }
 
     .engine-cta {
-      min-height: 46px;
-      border-radius: 13px;
-      background: #ffffff;
-      color: #0f172a;
+      min-height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #00d9ff, #00b4d8) !important;
+      color: #0a0d1a !important;
+      font-weight: 700 !important;
+      box-shadow: 0 4px 16px rgba(0, 217, 255, 0.4);
       font-weight: 750;
       box-shadow: 0 10px 28px -14px rgba(255, 255, 255, 0.35);
     }

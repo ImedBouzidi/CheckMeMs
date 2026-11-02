@@ -180,12 +180,12 @@ import { LanguageService } from '../../core/i18n/language.service';
       align-items: center;
       overflow: hidden;
       padding: clamp(28px, 5vw, 58px);
-      border: 1px solid rgba(191, 219, 254, 0.8);
-      border-radius: 30px;
+      border: 1px solid var(--cm-line);
+      border-radius: 28px;
       background:
-        radial-gradient(540px 340px at 94% 8%, rgba(191, 219, 254, 0.72), transparent 66%),
-        radial-gradient(420px 280px at 4% 100%, rgba(254, 243, 199, 0.52), transparent 70%),
-        linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(246, 250, 255, 0.96));
+        radial-gradient(540px 340px at 94% 8%, rgba(101, 41, 216, 0.22), transparent 66%),
+        radial-gradient(420px 280px at 4% 100%, rgba(0, 217, 255, 0.12), transparent 70%),
+        linear-gradient(135deg, #1d2942 0%, #101629 100%);
       box-shadow: var(--cm-shadow-lg);
     }
 
@@ -222,23 +222,27 @@ import { LanguageService } from '../../core/i18n/language.service';
     .hero-title {
       max-width: 640px;
       margin: 0;
-      color: #0f172a;
+      color: #f4f7ff;
+      font-family: 'Manrope', sans-serif;
       font-size: clamp(2.5rem, 5.3vw, 4.5rem);
       font-weight: 800;
-      line-height: 0.98;
-      letter-spacing: -0.065em;
+      line-height: 1.02;
+      letter-spacing: -0.04em;
     }
 
     .hero-title span {
-      background: linear-gradient(100deg, #1d4ed8 0%, #2563eb 48%, #0e7490 100%);
+      background: linear-gradient(100deg, #00d9ff 0%, #6529d8 70%, #ff792e 100%);
+      -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
+      filter: drop-shadow(0 0 20px rgba(0, 217, 255, 0.3));
     }
 
     .hero-subtitle {
       max-width: 57ch;
       margin: 22px 0 0;
-      color: #52627a;
+      color: #a9b6cc;
+      font-family: 'Inter', sans-serif;
       font-size: clamp(0.98rem, 1.5vw, 1.08rem);
       line-height: 1.7;
     }
@@ -312,12 +316,12 @@ import { LanguageService } from '../../core/i18n/language.service';
       width: min(100%, 350px);
       aspect-ratio: 1;
       overflow: hidden;
-      border: 8px solid rgba(255, 255, 255, 0.9);
+      border: 4px solid var(--cm-line);
       border-radius: 22px;
-      background: repeating-conic-gradient(#e4eaf2 0% 25%, #f9fbfe 0% 50%) 50% / 25% 25%;
+      background: repeating-conic-gradient(#182238 0% 25%, #263550 0% 50%) 50% / 25% 25%;
       box-shadow:
-        0 34px 60px -28px rgba(15, 23, 42, 0.55),
-        0 12px 26px -18px rgba(15, 23, 42, 0.35);
+        0 34px 60px -20px rgba(0, 0, 0, 0.8),
+        0 0 24px rgba(0, 217, 255, 0.15);
       transform: rotate(-4deg);
     }
 
@@ -368,10 +372,11 @@ import { LanguageService } from '../../core/i18n/language.service';
       align-items: center;
       gap: 10px;
       padding: 10px 14px 10px 10px;
-      border: 1px solid rgba(203, 213, 225, 0.9);
+      border: 1px solid var(--cm-line);
       border-radius: 15px;
-      background: rgba(255, 255, 255, 0.94);
-      box-shadow: 0 16px 35px -18px rgba(15, 23, 42, 0.42);
+      background: rgba(29, 41, 66, 0.94);
+      color: #f4f7ff;
+      box-shadow: 0 16px 35px -10px rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(12px);
     }
 

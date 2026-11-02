@@ -42,8 +42,10 @@ class BoardMarkers {
 }
 
 /// Adult boards: static navy dots and rings.
-const BoardMarkers kClassicBoardMarkers =
-    BoardMarkers(moveColor: kTargetDotColor, captureColor: kTargetDotColor);
+const BoardMarkers kClassicBoardMarkers = BoardMarkers(
+  moveColor: kTargetDotColor,
+  captureColor: kTargetDotColor,
+);
 
 /// Kids boards: pink dots and rings that breathe while it is the child's turn.
 const BoardMarkers kKidsBoardMarkers = BoardMarkers(
@@ -159,7 +161,8 @@ class ChessBoardView extends StatefulWidget {
   State<ChessBoardView> createState() => _ChessBoardViewState();
 }
 
-class _ChessBoardViewState extends State<ChessBoardView> with SingleTickerProviderStateMixin {
+class _ChessBoardViewState extends State<ChessBoardView>
+    with SingleTickerProviderStateMixin {
   String? _dragFrom;
   Offset _dragOffset = Offset.zero;
   AnimationController? _pulse;
@@ -184,8 +187,10 @@ class _ChessBoardViewState extends State<ChessBoardView> with SingleTickerProvid
   }
 
   void _startPulse() {
-    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 620))
-      ..repeat(reverse: true);
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 620),
+    )..repeat(reverse: true);
   }
 
   @override
@@ -199,6 +204,7 @@ class _ChessBoardViewState extends State<ChessBoardView> with SingleTickerProvid
     return LayoutBuilder(
       builder: (context, constraints) {
         final side = math.min(constraints.maxWidth, constraints.maxHeight);
+        if (!side.isFinite || side <= 0) return const SizedBox.shrink();
         final squareSize = side / 8;
 
         return SizedBox(
@@ -260,24 +266,32 @@ class _ChessBoardViewState extends State<ChessBoardView> with SingleTickerProvid
                 ),
               ),
               // Gesture layer.
-              if (widget.interactive)
+              if (widget.interactive && side > 0)
                 Positioned.fill(
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTapUp: widget.onSquareTap == null
                         ? null
                         : (details) {
-                            final square = _squareAt(details.localPosition, squareSize);
+                            final square = _squareAt(
+                              details.localPosition,
+                              squareSize,
+                            );
                             if (square != null) widget.onSquareTap!(square);
                           },
                     onPanStart: widget.onMoveAttempt == null
                         ? null
                         : (details) {
-                            final square = _squareAt(details.localPosition, squareSize);
+                            final square = _squareAt(
+                              details.localPosition,
+                              squareSize,
+                            );
                             if (square == null) return;
                             setState(() {
                               _dragFrom = square;
-                              _dragOffset = details.localPosition - _centerOf(square, squareSize);
+                              _dragOffset =
+                                  details.localPosition -
+                                  _centerOf(square, squareSize);
                             });
                             widget.onDragStarted?.call(square);
                             widget.onSquareTap?.call(square);
@@ -285,7 +299,9 @@ class _ChessBoardViewState extends State<ChessBoardView> with SingleTickerProvid
                     onPanUpdate: (details) {
                       if (_dragFrom == null) return;
                       setState(() {
-                        _dragOffset = details.localPosition - _centerOf(_dragFrom!, squareSize);
+                        _dragOffset =
+                            details.localPosition -
+                            _centerOf(_dragFrom!, squareSize);
                       });
                     },
                     onPanEnd: (details) {
@@ -340,13 +356,15 @@ class _ChessBoardViewState extends State<ChessBoardView> with SingleTickerProvid
       final lifted = _dragFrom == square;
       final liftCol = lifted ? _dragOffset.dx / squareSize : 0.0;
       final liftRow = lifted ? _dragOffset.dy / squareSize : 0.0;
-      pieces.add(_PiecePlacement(
-        asset: _assetFor(token),
-        col: position.$1 + liftCol,
-        row: position.$2 + liftRow,
-        square: square,
-        lifted: lifted,
-      ));
+      pieces.add(
+        _PiecePlacement(
+          asset: _assetFor(token),
+          col: position.$1 + liftCol,
+          row: position.$2 + liftRow,
+          square: square,
+          lifted: lifted,
+        ),
+      );
       file += 1;
     }
     return pieces;
@@ -439,15 +457,26 @@ class _BoardPainter extends CustomPainter {
 
     for (var row = 0; row < 8; row++) {
       for (var col = 0; col < 8; col++) {
-        final rect = Rect.fromLTWH(col * squareSize, row * squareSize, squareSize, squareSize);
+        final rect = Rect.fromLTWH(
+          col * squareSize,
+          row * squareSize,
+          squareSize,
+          squareSize,
+        );
         final square = _squareAt(col, row);
         final isLight = _isLight(col, row);
 
-        canvas.drawRect(rect, Paint()..color = isLight ? theme.light : theme.dark);
+        canvas.drawRect(
+          rect,
+          Paint()..color = isLight ? theme.light : theme.dark,
+        );
 
         // Last move.
         if (square == lastMoveFrom || square == lastMoveTo) {
-          canvas.drawRect(rect, Paint()..color = kLastMoveColor.withValues(alpha: 0.65));
+          canvas.drawRect(
+            rect,
+            Paint()..color = kLastMoveColor.withValues(alpha: 0.65),
+          );
         }
 
         // Lesson highlights.
@@ -463,37 +492,53 @@ class _BoardPainter extends CustomPainter {
 
         // Selection.
         if (square == selectedSquare) {
-          canvas.drawRect(rect, Paint()..color = kSelectedSquareColor.withValues(alpha: 0.65));
+          canvas.drawRect(
+            rect,
+            Paint()..color = kSelectedSquareColor.withValues(alpha: 0.65),
+          );
         }
 
         // Check glow.
         if (square == checkSquare) {
           final paint = Paint()
             ..shader = RadialGradient(
-              colors: [kCheckColor.withValues(alpha: 0.85), kCheckColor.withValues(alpha: 0.0)],
+              colors: [
+                kCheckColor.withValues(alpha: 0.85),
+                kCheckColor.withValues(alpha: 0.0),
+              ],
             ).createShader(rect);
           canvas.drawRect(rect, paint);
         }
 
         // Legal targets: dot for empty squares, ring for captures.
         if (legalTargets.contains(square)) {
-          final center = Offset((col + 0.5) * squareSize, (row + 0.5) * squareSize);
+          final center = Offset(
+            (col + 0.5) * squareSize,
+            (row + 0.5) * squareSize,
+          );
           final grow = 1 + markers.pulseGain * pulse;
           final empty = occupancy[square] == null;
           final color = empty ? markers.moveColor : markers.captureColor;
-          final alpha = (empty ? markers.dotAlpha : markers.ringAlpha) + markers.pulseAlpha * pulse;
+          final alpha =
+              (empty ? markers.dotAlpha : markers.ringAlpha) +
+              markers.pulseAlpha * pulse;
 
           if (markers.tintSquares) {
             canvas.drawRect(
               rect,
-              Paint()..color = color.withValues(alpha: markers.tintAlpha + markers.pulseAlpha * pulse),
+              Paint()
+                ..color = color.withValues(
+                  alpha: markers.tintAlpha + markers.pulseAlpha * pulse,
+                ),
             );
             if (!empty) {
               canvas.drawCircle(
                 center,
                 squareSize * 0.42,
                 Paint()
-                  ..color = markers.captureColor.withValues(alpha: markers.ringAlpha)
+                  ..color = markers.captureColor.withValues(
+                    alpha: markers.ringAlpha,
+                  )
                   ..style = PaintingStyle.stroke
                   ..strokeWidth = squareSize * markers.ringWidth,
               );
@@ -502,7 +547,9 @@ class _BoardPainter extends CustomPainter {
                   center,
                   squareSize * 0.34,
                   Paint()
-                    ..color = markers.captureColor.withValues(alpha: markers.ringAlpha * 0.45)
+                    ..color = markers.captureColor.withValues(
+                      alpha: markers.ringAlpha * 0.45,
+                    )
                     ..style = PaintingStyle.stroke
                     ..strokeWidth = squareSize * 0.035,
                 );
@@ -528,7 +575,9 @@ class _BoardPainter extends CustomPainter {
                 center,
                 squareSize * 0.34 * grow,
                 Paint()
-                  ..color = color.withValues(alpha: (alpha * 0.45).clamp(0.0, 1.0))
+                  ..color = color.withValues(
+                    alpha: (alpha * 0.45).clamp(0.0, 1.0),
+                  )
                   ..style = PaintingStyle.stroke
                   ..strokeWidth = squareSize * 0.035,
               );
@@ -554,13 +603,18 @@ class _BoardPainter extends CustomPainter {
       final painter = TextPainter(
         text: TextSpan(
           text: file,
-          style: style.copyWith(color: (isLight ? theme.dark : theme.light).withValues(alpha: 0.85)),
+          style: style.copyWith(
+            color: (isLight ? theme.dark : theme.light).withValues(alpha: 0.85),
+          ),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
       painter.paint(
         canvas,
-        Offset((col + 1) * squareSize - painter.width - 3, size.height - painter.height - 2),
+        Offset(
+          (col + 1) * squareSize - painter.width - 3,
+          size.height - painter.height - 2,
+        ),
       );
     }
 
@@ -570,7 +624,9 @@ class _BoardPainter extends CustomPainter {
       final painter = TextPainter(
         text: TextSpan(
           text: '$rank',
-          style: style.copyWith(color: (isLight ? theme.dark : theme.light).withValues(alpha: 0.85)),
+          style: style.copyWith(
+            color: (isLight ? theme.dark : theme.light).withValues(alpha: 0.85),
+          ),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -647,7 +703,9 @@ class _ArrowPainter extends CustomPainter {
       final from = _centerOf(arrow.from);
       final to = _centerOf(arrow.to);
       final color = _colorFor(arrow.tone);
-      final alpha = (0.85 - pulseGain * (1 - (pulseAnimation?.value ?? 1))).clamp(0.2, 1.0).toDouble();
+      final alpha = (0.85 - pulseGain * (1 - (pulseAnimation?.value ?? 1)))
+          .clamp(0.2, 1.0)
+          .toDouble();
 
       final direction = to - from;
       final distance = direction.distance;
@@ -670,23 +728,27 @@ class _ArrowPainter extends CustomPainter {
       final tip = to - unit * (squareSize * 0.06);
       final path = Path()
         ..moveTo(tip.dx, tip.dy)
-        ..lineTo(shaftEnd.dx + perpendicular.dx * headWidth / 2,
-            shaftEnd.dy + perpendicular.dy * headWidth / 2)
-        ..lineTo(shaftEnd.dx - perpendicular.dx * headWidth / 2,
-            shaftEnd.dy - perpendicular.dy * headWidth / 2)
+        ..lineTo(
+          shaftEnd.dx + perpendicular.dx * headWidth / 2,
+          shaftEnd.dy + perpendicular.dy * headWidth / 2,
+        )
+        ..lineTo(
+          shaftEnd.dx - perpendicular.dx * headWidth / 2,
+          shaftEnd.dy - perpendicular.dy * headWidth / 2,
+        )
         ..close();
       canvas.drawPath(path, Paint()..color = color.withValues(alpha: alpha));
     }
   }
 
   Color _colorFor(ArrowTone tone) => switch (tone) {
-        ArrowTone.success => const Color(0xFF22C55E),
-        ArrowTone.warning => const Color(0xFFF59E0B),
-        ArrowTone.danger => const Color(0xFFEF4444),
-        ArrowTone.info => const Color(0xFF3B82F6),
-        ArrowTone.secondary => const Color(0xFF64748B),
-        _ => hintColor,
-      };
+    ArrowTone.success => const Color(0xFF22C55E),
+    ArrowTone.warning => const Color(0xFFF59E0B),
+    ArrowTone.danger => const Color(0xFFEF4444),
+    ArrowTone.info => const Color(0xFF3B82F6),
+    ArrowTone.secondary => const Color(0xFF64748B),
+    _ => hintColor,
+  };
 
   Offset _centerOf(String square) {
     final file = _files.indexOf(square[0]);

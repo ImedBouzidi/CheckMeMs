@@ -258,10 +258,10 @@ import { ThemeService } from '../../core/services/theme.service';
       height: var(--toolbar-height);
       min-height: var(--toolbar-height);
       padding: 0 20px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
-      background: rgba(15, 23, 42, 0.96);
-      color: #f8fafc;
-      box-shadow: 0 12px 30px -24px rgba(15, 23, 42, 0.8);
+      border-bottom: 1px solid var(--cm-line);
+      background: rgba(16, 22, 41, 0.94);
+      color: #f4f7ff;
+      box-shadow: 0 12px 30px -20px rgba(0, 0, 0, 0.8), 0 0 1px rgba(0, 217, 255, 0.2);
       backdrop-filter: blur(16px);
     }
 
@@ -526,14 +526,19 @@ import { ThemeService } from '../../core/services/theme.service';
       display: flex;
       width: 272px;
       flex-direction: column;
-      border-inline-end: 1px solid rgba(203, 213, 225, 0.72);
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
-      box-shadow: 20px 0 50px -42px rgba(15, 23, 42, 0.55);
+      border-inline-end: 1px solid var(--cm-line);
+      background: linear-gradient(180deg, #ffffff 0%, #f4f7fc 100%);
+      box-shadow: 10px 0 30px -10px rgba(15, 23, 42, 0.08);
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    :host-context(html.dark-theme) .app-sidenav {
+      background: linear-gradient(180deg, #182238 0%, #101629 100%);
+      box-shadow: 10px 0 30px -10px rgba(0, 0, 0, 0.6);
     }
 
     :host-context(html[dir='rtl']) .app-sidenav {
-      box-shadow: -20px 0 50px -42px rgba(15, 23, 42, 0.55);
+      box-shadow: -20px 0 50px -42px rgba(15, 23, 42, 0.15);
     }
 
     .nav-scroll {
@@ -548,11 +553,15 @@ import { ThemeService } from '../../core/services/theme.service';
 
     .nav-label {
       margin: 0 24px 7px;
-      color: var(--cm-muted-light);
-      font-size: 0.64rem;
-      font-weight: 700;
+      color: #475569;
+      font-size: 0.68rem;
+      font-weight: 800;
       letter-spacing: 0.16em;
       text-transform: uppercase;
+    }
+
+    :host-context(html.dark-theme) .nav-label {
+      color: var(--cm-muted);
     }
 
     .nav-list {
@@ -564,27 +573,66 @@ import { ThemeService } from '../../core/services/theme.service';
       height: 46px;
       margin: 2px 12px;
       border-radius: 12px;
-      color: #475569;
+      color: #1e293b;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.92rem;
       transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
     }
 
-    .nav-link:hover {
-      background: #f1f5f9;
-      color: var(--cm-ink);
+    .nav-link mat-icon {
+      color: #475569;
+      transition: color 0.18s ease;
     }
 
-    .nav-link mat-icon {
-      color: #64748b;
+    .nav-link:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .nav-link:hover mat-icon {
+      color: #0284c7;
+    }
+
+    :host-context(html.dark-theme) .nav-link {
+      color: #cbd5e1;
+      font-weight: 500;
+    }
+
+    :host-context(html.dark-theme) .nav-link mat-icon {
+      color: #a9b6cc;
+    }
+
+    :host-context(html.dark-theme) .nav-link:hover {
+      background: rgba(38, 53, 80, 0.7);
+      color: #f4f7ff;
+    }
+
+    :host-context(html.dark-theme) .nav-link:hover mat-icon {
+      color: #00d9ff;
     }
 
     .nav-link.active {
-      background: linear-gradient(90deg, #e8f1ff, #f3f8ff);
-      color: var(--cm-primary-dark);
+      background: linear-gradient(90deg, #e0f2fe, #f0f9ff);
+      border: 1px solid #7dd3fc;
+      color: #0369a1;
       font-weight: 700;
     }
 
     .nav-link.active mat-icon {
-      color: var(--cm-primary);
+      color: #0284c7;
+    }
+
+    :host-context(html.dark-theme) .nav-link.active {
+      background: linear-gradient(90deg, rgba(0, 217, 255, 0.18), rgba(101, 41, 216, 0.18));
+      border: 1px solid rgba(0, 217, 255, 0.35);
+      color: #00d9ff;
+      font-weight: 700;
+    }
+
+    :host-context(html.dark-theme) .nav-link.active mat-icon {
+      color: #00d9ff;
+      filter: drop-shadow(0 0 6px rgba(0, 217, 255, 0.5));
     }
 
     .sidebar-promo {
@@ -592,11 +640,20 @@ import { ThemeService } from '../../core/services/theme.service';
       margin: 26px 14px 0;
       padding: 18px;
       overflow: hidden;
-      border: 1px solid rgba(191, 219, 254, 0.9);
-      border-radius: 18px;
+      border: 1px solid #bae6fd;
+      border-radius: 16px;
       background:
-        radial-gradient(140px 90px at 100% 0%, rgba(147, 197, 253, 0.5), transparent 70%),
-        linear-gradient(145deg, #f8fbff, #eef5ff);
+        radial-gradient(140px 90px at 100% 0%, rgba(186, 230, 253, 0.5), transparent 70%),
+        linear-gradient(145deg, #f0f9ff, #e0f2fe);
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    }
+
+    :host-context(html.dark-theme) .sidebar-promo {
+      border: 1px solid rgba(0, 217, 255, 0.25);
+      background:
+        radial-gradient(140px 90px at 100% 0%, rgba(101, 41, 216, 0.3), transparent 70%),
+        linear-gradient(145deg, #1d2942, #182238);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
     }
 
     .sidebar-promo-icon {
@@ -608,8 +665,16 @@ import { ThemeService } from '../../core/services/theme.service';
       margin-bottom: 11px;
       border-radius: 10px;
       background: #ffffff;
-      color: var(--cm-primary);
-      box-shadow: 0 6px 16px -10px rgba(37, 99, 235, 0.55);
+      color: #0284c7;
+      border: 1px solid #7dd3fc;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.2);
+    }
+
+    :host-context(html.dark-theme) .sidebar-promo-icon {
+      background: rgba(0, 217, 255, 0.15);
+      color: #00d9ff;
+      border: 1px solid rgba(0, 217, 255, 0.4);
+      box-shadow: 0 0 12px rgba(0, 217, 255, 0.3);
     }
 
     .sidebar-promo-icon mat-icon {
@@ -620,16 +685,25 @@ import { ThemeService } from '../../core/services/theme.service';
 
     .sidebar-promo strong {
       display: block;
-      color: #172554;
+      color: #0f172a;
       font-size: 0.88rem;
       font-weight: 700;
+      font-family: 'Manrope', sans-serif;
+    }
+
+    :host-context(html.dark-theme) .sidebar-promo strong {
+      color: #f4f7ff;
     }
 
     .sidebar-promo p {
       margin: 5px 0 14px;
-      color: #64748b;
-      font-size: 0.76rem;
+      color: #334155;
+      font-size: 0.78rem;
       line-height: 1.5;
+    }
+
+    :host-context(html.dark-theme) .sidebar-promo p {
+      color: #a9b6cc;
     }
 
     .sidebar-promo a {
@@ -665,6 +739,78 @@ import { ThemeService } from '../../core/services/theme.service';
     .content-inner {
       min-height: 100%;
       padding: 30px clamp(18px, 3vw, 38px) 46px;
+    }
+
+    :host-context(html:not(.dark-theme)) .app-toolbar {
+      background: rgba(255, 255, 255, 0.94);
+      color: #172033;
+      box-shadow: 0 10px 26px -20px rgba(30, 55, 90, 0.34), 0 0 1px rgba(37, 99, 235, 0.2);
+    }
+
+    :host-context(html:not(.dark-theme)) .menu-toggle,
+    :host-context(html:not(.dark-theme)) .theme-toggle {
+      color: #334155;
+    }
+
+    :host-context(html:not(.dark-theme)) .brand-mark {
+      border-color: #d9e2ef;
+      box-shadow: inset 0 -2px 0 rgba(30, 55, 90, 0.08);
+    }
+
+    :host-context(html:not(.dark-theme)) .brand-copy small {
+      color: #64748b;
+    }
+
+    :host-context(html:not(.dark-theme)) .language-picker {
+      border-color: #cbd5e1;
+      background: #f8fafc;
+      color: #334155;
+    }
+
+    :host-context(html:not(.dark-theme)) .language-picker mat-icon {
+      color: #2563eb;
+    }
+
+    :host-context(html:not(.dark-theme)) .theme-toggle:hover {
+      background: #eaf1fb;
+    }
+
+    :host-context(html:not(.dark-theme)) .account-button {
+      border-color: #d9e2ef;
+      color: #172033;
+    }
+
+    :host-context(html:not(.dark-theme)) .account-copy small,
+    :host-context(html:not(.dark-theme)) .account-chevron {
+      color: #64748b;
+    }
+
+    :host-context(html:not(.dark-theme)) .toolbar-login {
+      border-color: #93c5fd;
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+      color: #1d4ed8;
+      box-shadow: 0 8px 18px -12px rgba(37, 99, 235, 0.65);
+    }
+
+    :host-context(html:not(.dark-theme)) .toolbar-login:hover {
+      border-color: #2563eb;
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      color: #1e40af;
+    }
+
+    :host-context(html:not(.dark-theme)) .kids-mode-button {
+      border-color: #c4b5fd;
+      background: linear-gradient(135deg, #faf5ff, #eff6ff);
+      color: #5b21b6;
+    }
+
+    :host-context(html:not(.dark-theme)) .kids-mode-button mat-icon {
+      color: #9333ea;
+    }
+
+    :host-context(html:not(.dark-theme)) .toolbar-signup {
+      background: #1d4ed8;
+      color: #ffffff;
     }
 
     @media (max-width: 960px) {
