@@ -34,6 +34,27 @@ const Color kKidLearnGreen = Color(0xFF22C55E);
 bool kidsMotionEnabled(BuildContext context) =>
     !(MediaQuery.maybeOf(context)?.disableAnimations ?? false);
 
+/// Every kids piece/logo image, drawn through this wrapper so a missing or
+/// malformed SVG can never propagate an exception upward and blank the page:
+/// a broken asset degrades to a friendly emoji tile of the same footprint.
+Widget kidSvg(String asset, double width, double height) {
+  return SvgPicture.asset(
+    asset,
+    width: width,
+    height: height,
+    errorBuilder: (context, error, stack) => DecoratedBox(
+      decoration: const BoxDecoration(
+        color: Color(0xFFF3E8FF),
+        borderRadius: BorderRadius.all(Radius.circular(10)),
+      ),
+      child: Center(
+        child: Text('🐴',
+            style: TextStyle(fontSize: math.min(width, height) * 0.55)),
+      ),
+    ),
+  );
+}
+
 /// `linear-gradient(135deg, #fef3c7, #fce7f3, #dbeafe, #d1fae5, #fef3c7)`
 /// slid around with `background-size: 400%`.
 const List<Color> kKidWorldColors = [
@@ -376,10 +397,10 @@ class _KidBackdrop extends StatelessWidget {
           offset: Offset(0, lift),
           child: Transform.rotate(
             angle: (-piece.degrees + 2 * piece.degrees * wave) * math.pi / 180,
-            child: SvgPicture.asset(
+            child: kidSvg(
               kidPieceAsset(piece.image),
-              width: piece.size,
-              height: piece.size,
+              piece.size,
+              piece.size,
             ),
           ),
         ),
@@ -751,6 +772,9 @@ class KidChoiceCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                // Shrink-wrap the height (required inside a scrollable),
+                // while still filling stretched Row heights.
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     emoji,
@@ -767,7 +791,10 @@ class KidChoiceCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Expanded(
+                  // Flexible (loose fit), not Expanded: the card must be able
+                  // to shrink-wrap its height inside a scrollable, while still
+                  // filling the remaining space when it is stretched by a Row.
+                  Flexible(
                     child: Text(
                       text,
                       style: const TextStyle(
@@ -880,10 +907,10 @@ class KidPieceCard extends StatelessWidget {
                   piece.emoji,
                   style: const TextStyle(fontSize: 21, height: 1.2),
                 ),
-                SvgPicture.asset(
+                kidSvg(
                   kidPieceAsset(piece.image),
-                  width: compact ? 46 : 66,
-                  height: compact ? 46 : 66,
+                  compact ? 46 : 66,
+                  compact ? 46 : 66,
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -1177,20 +1204,20 @@ class _KidMiniBoardState extends State<KidMiniBoard>
                   offset: Offset(0, -side * 0.05 * wave),
                   child: Transform.scale(
                     scale: 1 + 0.05 * wave,
-                    child: SvgPicture.asset(
+                    child: kidSvg(
                       kidPieceAsset(widget.piece.image),
-                      width: side * 0.78,
-                      height: side * 0.78,
+                      side * 0.78,
+                      side * 0.78,
                     ),
                   ),
                 ),
               if (!center && capture)
                 Semantics(
                   label: widget.enemyPawnLabel,
-                  child: SvgPicture.asset(
+                  child: kidSvg(
                     'assets/pieces/bp.svg',
-                    width: side * 0.64,
-                    height: side * 0.64,
+                    side * 0.64,
+                    side * 0.64,
                   ),
                 ),
               if (!center && capture)
@@ -1455,10 +1482,10 @@ class _KidPieceDialog extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _Halo(
-                              child: SvgPicture.asset(
+                              child: kidSvg(
                                 kidPieceAsset(piece.image),
-                                width: 88,
-                                height: 88,
+                                88,
+                                88,
                               ),
                             ),
                             const SizedBox(width: 14),
@@ -1802,10 +1829,12 @@ class KidHeader extends StatelessWidget {
                   'assets/logo/knight-dark.svg',
                   width: 32,
                   height: 32,
-                  errorBuilder: (context, error, stack) => SvgPicture.asset(
+                  // Never let an asset problem escape: knight logo → piece →
+                  // emoji horse, so the header always renders something.
+                  errorBuilder: (context, error, stack) => kidSvg(
                     'assets/pieces/wn.svg',
-                    width: 32,
-                    height: 32,
+                    32,
+                    32,
                   ),
                 ),
               ),

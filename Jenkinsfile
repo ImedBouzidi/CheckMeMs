@@ -202,14 +202,25 @@ pipeline {
             }
         }
 
+        stage('Check push configuration') {
+            script {
+                if (params.PUSH_IMAGES && !(params.DOCKER_REGISTRY ?: '').trim()) {
+                    echo "PUSH_IMAGES is on but DOCKER_REGISTRY is empty - pushing to a registry is skipped."
+                }
+            }
+        }
+
         stage('Push images') {
-            when { expression { params.PUSH_IMAGES } }
+            // Skip gracefully: a push request without a registry is a no-op warning, not a failed build.
+            when {
+                allOf {
+                    expression { params.PUSH_IMAGES }
+                    expression { (params.DOCKER_REGISTRY ?: '').trim() }
+                }
+            }
             steps {
                 script {
                     def registry = (params.DOCKER_REGISTRY ?: '').trim()
-                    if (!registry) {
-                        error 'PUSH_IMAGES requires DOCKER_REGISTRY'
-                    }
                     def tag = "build-${env.BUILD_NUMBER}"
                     def images = ['eureka-server', 'api-gateway', 'games-service',
                                   'user-profile-service', 'learning-service',

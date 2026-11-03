@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -108,13 +107,18 @@ class _Hero extends StatelessWidget {
             ],
           );
         }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(flex: 12, child: text),
-            const SizedBox(width: 22),
-            Expanded(flex: 8, child: Center(child: mascot)),
-          ],
+        // IntrinsicHeight gives the stretch a finite reference height: inside
+        // KidsWorld's scrollable the incoming height is unbounded and a bare
+        // stretched Row would force infinite height onto its children.
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(flex: 12, child: text),
+              const SizedBox(width: 22),
+              Expanded(flex: 8, child: Center(child: mascot)),
+            ],
+          ),
         );
       },
     );
@@ -276,7 +280,7 @@ class _MascotState extends State<_Mascot> with TickerProviderStateMixin {
               offset: Offset(0, -16 * _bounce.value),
               child: Transform.rotate(angle: (-2 + 4 * _bounce.value) * math.pi / 180, child: child),
             ),
-            child: SvgPicture.asset(kidPieceAsset('wN'), width: 170, height: 170),
+            child: kidSvg(kidPieceAsset('wN'), 170, 170),
           ),
           Positioned(
             top: 82,
@@ -383,12 +387,14 @@ class _ChoiceGrid extends StatelessWidget {
             ],
           );
         }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final card in cards)
-              Expanded(child: card)
-          ].withSeparators(const SizedBox(width: 22)),
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final card in cards)
+                Expanded(child: card)
+            ].withSeparators(const SizedBox(width: 22)),
+          ),
         );
       },
     );
@@ -484,15 +490,17 @@ class _HowTo extends StatelessWidget {
                   ],
                 );
               }
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (var i = 0; i < steps.length; i++)
-                    Expanded(
-                      child: KidStepCard(
-                          number: i + 1, emoji: steps[i].emoji, text: steps[i].text),
-                    )
-                ].withSeparators(const SizedBox(width: 16)),
+              return IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = 0; i < steps.length; i++)
+                      Expanded(
+                        child: KidStepCard(
+                            number: i + 1, emoji: steps[i].emoji, text: steps[i].text),
+                      )
+                  ].withSeparators(const SizedBox(width: 16)),
+                ),
               );
             },
           ),

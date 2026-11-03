@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:chess_mobile/core/i18n/language_service.dart';
 import 'package:chess_mobile/core/storage/app_storage.dart';
 import 'package:chess_mobile/features/home/kids_home_screen.dart';
+import 'package:chess_mobile/features/kids/kids_copy.dart';
 import 'package:chess_mobile/routing/app_router.dart';
 
 void main() {
@@ -28,7 +29,7 @@ void main() {
         .setMockMethodCallHandler(MethodChannel('xyz.luan/audioplayers'), null);
   });
 
-  Widget host() {
+  Widget host({Key? key}) {
     final router = GoRouter(
       initialLocation: AppRoutes.kids,
       routes: [

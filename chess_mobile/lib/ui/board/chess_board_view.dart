@@ -664,15 +664,26 @@ class _BoardPainter extends CustomPainter {
   }
 
   /// The classic "dark on light, light on dark" checkering.
+  ///
+  /// Delegates the parity rule to [squareIsLight] so painters and tests
+  /// share one source of truth.
   bool _isLight(int col, int row) {
-    final square = _squareAt(col, row);
-    final file = _files.indexOf(square[0]);
-    final rank = int.parse(square.substring(1));
-    return (file + rank) % 2 == 1;
+    return squareIsLight(_squareAt(col, row));
   }
 
   @override
   bool shouldRepaint(_BoardPainter oldDelegate) => true;
+}
+
+/// True when [square] (e.g. `a1`) is a light square on a standard chessboard:
+/// light ⇔ 0-based file index + rank is *even*, which puts the light square at
+/// the bottom-right when playing white ("white on the right"), the same rule
+/// as the web app's `(row + col) % 2 === 0`.
+bool squareIsLight(String square) {
+  const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+  final file = files.indexOf(square[0]);
+  final rank = int.parse(square.substring(1));
+  return (file + rank) % 2 == 0;
 }
 
 /// Paints arrows with rounded shafts and triangular heads, colored by tone.
