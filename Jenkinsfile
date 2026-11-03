@@ -203,9 +203,11 @@ pipeline {
         }
 
         stage('Check push configuration') {
-            script {
-                if (params.PUSH_IMAGES && !(params.DOCKER_REGISTRY ?: '').trim()) {
-                    echo "PUSH_IMAGES is on but DOCKER_REGISTRY is empty - pushing to a registry is skipped."
+            steps {
+                script {
+                    if (params.PUSH_IMAGES && !(params.DOCKER_REGISTRY ?: '').trim()) {
+                        echo "PUSH_IMAGES is on but DOCKER_REGISTRY is empty - pushing to a registry is skipped."
+                    }
                 }
             }
         }
