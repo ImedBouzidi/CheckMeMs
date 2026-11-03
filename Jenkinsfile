@@ -130,7 +130,7 @@ pipeline {
                                 -e DB_PASSWORD=admin
                                 -e SERVER_PORT=0
                                 -e KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-                                -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+                                -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
                                 -e OAUTH2_ISSUER_URI=http://keycloak:8080/realms/chess-platform
                                 -e OAUTH2_JWK_SET_URI=http://keycloak:8080/realms/chess-platform/protocol/openid-connect/certs
                                 -e KEYCLOAK_AUTH_SERVER_URL=http://keycloak:8080
@@ -224,9 +224,8 @@ pipeline {
                 script {
                     def registry = (params.DOCKER_REGISTRY ?: '').trim()
                     def tag = "build-${env.BUILD_NUMBER}"
-                    def images = ['eureka-server', 'api-gateway', 'games-service',
-                                  'user-profile-service', 'learning-service',
-                                  'move-analysis-service', 'kafka-service', 'chess-web']
+                    def images = ['eureka', 'gateway', 'games', 'profiles',
+                                  'learning', 'analysis', 'events', 'web']
                     withCredentials([usernamePassword(
                             credentialsId: 'docker-registry-login',
                             usernameVariable: 'REG_USER',
@@ -253,7 +252,6 @@ pipeline {
 
     post {
         always {
-            sh 'docker compose stop postgres kafka eureka-server keycloak || true'
             sh 'docker compose ps || true'
         }
         failure {

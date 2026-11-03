@@ -3,11 +3,11 @@
 #   docker compose up -d --build
 #
 # Browser endpoints stay on the same ports as the local dev stack:
-#   http://localhost:4200  chess-web (nginx)
-#   http://localhost:8081  api-gateway
+#   http://localhost:4200  web (nginx)
+#   http://localhost:8081  gateway
 #   http://localhost:8080  Keycloak
 #   http://localhost:8761  Eureka console
-#   :8082 kill analysis :8083 games :8084 profiles :8088 kafka-service :8091 learning (direct)
+#   :8082 analysis :8083 games :8084 profiles :8088 events :8091 learning (direct)
 #
 # Internal-only (no host port): postgres 5432, kafka 29092(+29093).
 # They never collide with the local dev instances that share the same defaults.
@@ -28,7 +28,7 @@ x-db-env: &db-env
   DB_PORT: 5432
   DB_USERNAME: chess_user
   DB_PASSWORD: ${POSTGRES_PASSWORD:-chess_pass}
-  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
 
 x-keycloak-env: &keycloak-env
   # The realm is imported from keycloak-21.1.1/data/import/realm-export.json, made on
@@ -124,9 +124,9 @@ services:
 
   ## ---------- platform ----------
 
-  eureka-server:
+  eureka:
     build: ./eureka-server
-    image: checkmems/eureka-server:latest
+    image: checkmems/eureka:latest
     environment: { <<: *java-opts }
     ports:
       - "8761:8761"
@@ -139,24 +139,24 @@ services:
       start_period: 30s
     networks: [chess-net]
 
-  api-gateway:
+  gateway:
     build: ./api-gateway
-    image: checkmems/api-gateway:latest
+    image: checkmems/gateway:latest
     environment: { <<: *java-opts }
     ports:
       - "8081:8081"
     restart: unless-stopped
     depends_on:
-      eureka-server: { condition: service_healthy }
+      eureka: { condition: service_healthy }
     networks: [chess-net]
 
   ## ---------- business services ----------
   # Ports match application-docker.yml. SERVER_PORT is required where the
   # yml leaves it without a default (user-profile-service).
 
-  games-service:
+  games:
     build: ./games-service
-    image: checkmems/games-service:latest
+    image: checkmems/games:latest
     environment:
       <<: [*java-opts, *db-env, *keycloak-env]
       SERVER_PORT: 8083
@@ -167,15 +167,15 @@ services:
     restart: unless-stopped
     depends_on:
       postgres: { condition: service_healthy }
-      eureka-server: { condition: service_healthy }
+      eureka: { condition: service_healthy }
       keycloak: { condition: service_healthy }
     networks: [chess-net]
 
-  user-profile-service:
+  profiles:
     build:
       context: .
       dockerfile: user-profile-service/Dockerfile
-    image: checkmems/user-profile-service:latest
+    image: checkmems/profiles:latest
     environment:
       <<: [*java-opts, *db-env, *keycloak-env]
       SERVER_PORT: 8084
@@ -196,15 +196,15 @@ services:
     restart: unless-stopped
     depends_on:
       postgres: { condition: service_healthy }
-      eureka-server: { condition: service_healthy }
+      eureka: { condition: service_healthy }
       keycloak: { condition: service_healthy }
     networks: [chess-net]
 
-  learning-service:
+  learning:
     build:
       context: .
       dockerfile: learning-service/Dockerfile
-    image: checkmems/learning-service:latest
+    image: checkmems/learning:latest
     environment:
       <<: [*java-opts, *db-env, *keycloak-env]
       SERVER_PORT: 8091
@@ -215,18 +215,18 @@ services:
     restart: unless-stopped
     depends_on:
       postgres: { condition: service_healthy }
-      eureka-server: { condition: service_healthy }
+      eureka: { condition: service_healthy }
       keycloak: { condition: service_healthy }
     networks: [chess-net]
 
-  move-analysis-service:
+  analysis:
     # Builds Stockfish from ../stockfish in an extra context (see Dockerfile header).
     build:
       context: ./move-analysis-service
       dockerfile: Dockerfile
       additional_contexts:
         - "stockfish=./stockfish"
-    image: checkmems/move-analysis-service:latest
+    image: checkmems/analysis:latest
     environment:
       <<: [*java-opts, *db-env, *keycloak-env]
       SERVER_PORT: 8082
@@ -245,13 +245,13 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
       kafka: { condition: service_healthy }
-      eureka-server: { condition: service_healthy }
+      eureka: { condition: service_healthy }
       keycloak: { condition: service_healthy }
     networks: [chess-net]
 
-  kafka-service:
+  events:
     build: ./kafka-service
-    image: checkmems/kafka-service:latest
+    image: checkmems/events:latest
     environment:
       <<: *java-opts
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
@@ -260,15 +260,15 @@ services:
     restart: unless-stopped
     depends_on:
       kafka: { condition: service_healthy }
-      eureka-server: { condition: service_healthy }
+      eureka: { condition: service_healthy }
     networks: [chess-net]
 
-  chess-web:
+  web:
     build: ./chess-web
-    image: checkmems/chess-web:latest
+    image: checkmems/web:latest
     ports:
       - "4200:80"
     restart: unless-stopped
     depends_on:
-      api-gateway: { condition: service_started }
+      gateway: { condition: service_started }
     networks: [chess-net]

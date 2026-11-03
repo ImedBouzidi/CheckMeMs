@@ -8,11 +8,11 @@ server:
 
 eureka:
   instance:
-    hostname: eureka-server
+    hostname: eureka
     prefer-ip-address: true
   client:
     service-url:
-      defaultZone: http://eureka-server:8761/eureka
+      defaultZone: http://eureka:8761/eureka
 
 management:
   endpoints:
