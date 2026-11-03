@@ -30,10 +30,10 @@ pipeline {
     parameters {
         booleanParam(name: 'RUN_TESTS', defaultValue: true,
             description: 'Run unit tests for the Java services and build the Angular app')
-        booleanParam(name: 'PUSH_IMAGES', defaultValue: false,
-            description: 'Push built images to DOCKER_REGISTRY (needs credential docker-registry-login)')
-        string(name: 'DOCKER_REGISTRY', defaultValue: '',
-            description: 'Registry path, e.g. ghcr.io/your-org or registry.example.com/checkmems')
+        booleanParam(name: 'PUSH_IMAGES', defaultValue: true,
+            description: 'Push built images to DOCKER_REGISTRY after a successful build (needs credential docker-registry-login)')
+        string(name: 'DOCKER_REGISTRY', defaultValue: 'docker.io/imedbennington',
+            description: 'Registry path. Docker Hub: docker.io/<username> (or just <username>)')
         booleanParam(name: 'DEPLOY_HOST', defaultValue: false,
             description: 'Bring the full docker-compose stack up on this host after build')
     }
@@ -223,6 +223,9 @@ pipeline {
             steps {
                 script {
                     def registry = (params.DOCKER_REGISTRY ?: '').trim()
+                    // docker login/logout want a bare host (docker.io, ghcr.io, ...):
+                    // the "docker.io/<namespace>" form sets the Hub namespace but the auth host strips it.
+                    def host = (registry.split('/'))[0]
                     def tag = "build-${env.BUILD_NUMBER}"
                     def images = ['eureka', 'gateway', 'games', 'profiles',
                                   'learning', 'analysis', 'events', 'web']
@@ -230,12 +233,17 @@ pipeline {
                             credentialsId: 'docker-registry-login',
                             usernameVariable: 'REG_USER',
                             passwordVariable: 'REG_PASS')]) {
-                        sh 'echo "$REG_PASS" | docker login ${DOCKER_REGISTRY} --username "$REG_USER" --password-stdin'
-                        images.each { svc ->
-                            sh "docker tag ${env.APP_IMAGE_PREFIX}/${svc}:latest ${registry}/${svc}:${tag}"
-                            sh "docker push ${registry}/${svc}:${tag}"
+                        withEnv(["LOGIN_HOST=${host}"]) {
+                            sh 'printf "%s\\n" "$REG_PASS" | docker login "$LOGIN_HOST" --username "$REG_USER" --password-stdin'
+                            images.each { svc ->
+                                sh "docker tag ${env.APP_IMAGE_PREFIX}/${svc}:latest ${registry}/${svc}:${tag}"
+                                sh "docker push ${registry}/${svc}:${tag}"
+                                // Moving target on the registry, like the compose images: latest always points at the newest successful build.
+                                sh "docker tag ${env.APP_IMAGE_PREFIX}/${svc}:latest ${registry}/${svc}:latest"
+                                sh "docker push ${registry}/${svc}:latest"
+                            }
+                            sh 'docker logout "$LOGIN_HOST"'
                         }
-                        sh 'docker logout ${DOCKER_REGISTRY}'
                     }
                 }
             }
