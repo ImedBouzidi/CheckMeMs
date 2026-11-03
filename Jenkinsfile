@@ -2,7 +2,7 @@
 //
 // Requirements on the build agent (label 'docker'):
 //   - Docker Engine + Compose v2 (`docker compose version` works)
-//   - a credential with id 'docker-registry-login' when PUSH_IMAGES is enabled
+//   - a credential with id 'dockerhub-creds' when PUSH_IMAGES is enabled
 //
 // Flow: validate compose -> unit tests (parallel, in containers) -> build images ->
 // optional push -> optional smoke deploy of the full stack on the build host.
@@ -31,7 +31,7 @@ pipeline {
         booleanParam(name: 'RUN_TESTS', defaultValue: true,
             description: 'Run unit tests for the Java services and build the Angular app')
         booleanParam(name: 'PUSH_IMAGES', defaultValue: true,
-            description: 'Push built images to DOCKER_REGISTRY after a successful build (needs credential docker-registry-login)')
+            description: 'Push built images to DOCKER_REGISTRY after a successful build (needs credential dockerhub-creds)')
         string(name: 'DOCKER_REGISTRY', defaultValue: 'docker.io/imedbennington',
             description: 'Registry path. Docker Hub: docker.io/<username> (or just <username>)')
         booleanParam(name: 'DEPLOY_HOST', defaultValue: false,
@@ -230,7 +230,7 @@ pipeline {
                     def images = ['eureka', 'gateway', 'games', 'profiles',
                                   'learning', 'analysis', 'events', 'web']
                     withCredentials([usernamePassword(
-                            credentialsId: 'docker-registry-login',
+                            credentialsId: 'dockerhub-creds',
                             usernameVariable: 'REG_USER',
                             passwordVariable: 'REG_PASS')]) {
                         withEnv(["LOGIN_HOST=${host}"]) {
