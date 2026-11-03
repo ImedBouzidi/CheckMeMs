@@ -59,7 +59,7 @@ pipeline {
                     # Start PostgreSQL before Keycloak so this remains safe when
                     # Jenkins reuses a pgdata volume created by an older build.
                     docker compose up -d --wait \
-                        postgres kafka eureka-server
+                        postgres kafka eureka
 
                     # The compose postgres superuser is chess_user, while the
                     # service .env files use imed/admin. Create that role and
