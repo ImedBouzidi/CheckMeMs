@@ -20,7 +20,9 @@ export const APP_CONFIG: AppConfig = {
   apiBaseUrl: 'http://localhost:8081/api',
   wsUrl: 'ws://localhost:8081/ws',
   keycloak: {
-    issuer: 'http://localhost:8080/realms/chess-platform',
+    // Must match KC_HOSTNAME published by docker-compose (host port 8085;
+    // 8080 is taken by local Jenkins).
+    issuer: 'http://localhost:8085/realms/chess-platform',
     realm: 'chess-platform',
     clientId: 'chess-web',
     redirectUri: window.location.origin + '/',

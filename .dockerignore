@@ -1,5 +1,8 @@
-# Root context is only used by move-analysis-service (it builds Stockfish from ../stockfish).
-# Everything the move-analysis image does not need stays out of the build context.
+# Root context is used by the keycloak Dockerfile (COPYs the realm export from
+# keycloak-21.1.1) and by the move-analysis build (which gets the Stockfish
+# sources as an extra `stockfish=./stockfish` context). The Keycloak
+# distribution directories are the only genuinely heavy parts; the data dir
+# (realm export) stays in the context so the keycloak image can COPY it.
 .git/
 .idea/
 *.iml
@@ -7,7 +10,8 @@
 chess-web/
 kafka_2.13-4.4.0/
 kafka_2.13-4.4.0.tgz
-keycloak-21.1.1/
+keycloak-21.1.1/lib/
+keycloak-21.1.1/bin/
 .stockfish/
 .logs/
 .env

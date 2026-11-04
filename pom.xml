@@ -48,6 +48,18 @@
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <version>${spring.boot.version}</version>
+                    <!-- The services that inherit this parent do not use
+                         spring-boot-starter-parent, so the plugin's default
+                         repackage binding never runs and `mvn package`
+                         produces a plain jar ("no main manifest attribute").
+                         Bind it explicitly. -->
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>repackage</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>

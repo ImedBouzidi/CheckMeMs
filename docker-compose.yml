@@ -5,7 +5,8 @@
 # Browser endpoints stay on the same ports as the local dev stack:
 #   http://localhost:4200  web (nginx)
 #   http://localhost:8081  gateway
-#   http://localhost:8080  Keycloak
+#   http://localhost:8085  Keycloak (host 8080 is taken by local Jenkins; the
+#                          container still listens on 8080 internally)
 #   http://localhost:8761  Eureka console
 #   :8082 analysis :8083 games :8084 profiles :8088 events :8091 learning (direct)
 #
@@ -13,6 +14,10 @@
 # after a build is one command:
 #   docker compose build --pull
 #   docker compose push
+#
+# Two supporting images are built from repo-root contexts:
+#   - keycloak  (docker/keycloak/Dockerfile): quay.io/keycloak + baked-in realm export,
+#     so ./keycloak-21.1.1 does not need to be mounted on the host anymore.
 #
 # Internal-only (no host port): postgres 5432, kafka 29092(+29093).
 # They never collide with the local dev instances that share the same defaults.
@@ -36,11 +41,13 @@ x-db-env: &db-env
   EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
 
 x-keycloak-env: &keycloak-env
-  # The realm is imported from keycloak-21.1.1/data/import/realm-export.json, made on
-  # KC_HOSTNAME=localhost, so JWTs the browser mints carry iss=http://localhost:8080/...;
-  # resource servers must compare against that exact URL.
-  OAUTH2_ISSUER_URI: http://localhost:8080/realms/chess-platform
-  # JWKS fetch service-to-service, inside the compose network.
+  # The realm is imported from keycloak-21.1.1/data/import/realm-export.json. The
+  # compose Keycloak runs on host port KEYCLOAK_HOST_PORT (default 8085) and
+  # KC_HOSTNAME advertises that, so JWTs the browser mints carry
+  # iss=http://localhost:8085/...; resource servers must compare against that
+  # exact URL.
+  OAUTH2_ISSUER_URI: http://localhost:8085/realms/chess-platform
+  # JWKS fetch service-to-service, inside the compose network (container port).
   OAUTH2_JWK_SET_URI: http://keycloak:8080/realms/chess-platform/protocol/openid-connect/certs
 
 x-java-opts: &java-opts
@@ -95,7 +102,10 @@ services:
     networks: [chess-net]
 
   keycloak:
-    image: quay.io/keycloak/keycloak:21.1.1
+    image: imedbennington/keycloak:latest
+    build:
+      context: .
+      dockerfile: docker/keycloak/Dockerfile
     command: ["start-dev", "--import-realm"]
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USERNAME:-admin}
@@ -106,13 +116,14 @@ services:
       KC_DB_URL_DATABASE: keycloak
       KC_DB_USERNAME: chess_user
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-chess_pass}
-      # Frontend URLs (auth redirects, iss claim) stay on localhost:8080 like the dev realm.
+      # Frontend URL (auth redirects, iss claim) tracks the published host port.
+      # Keycloak 21 does not parse a full URL in KC_HOSTNAME - use the
+      # host/port pair instead.
       KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: ${KEYCLOAK_HOST_PORT:-8085}
       KC_HEALTH_ENABLED: "true"
-    volumes:
-      - ./keycloak-21.1.1/data/import:/opt/keycloak/data/import:ro
     ports:
-      - "${KEYCLOAK_HOST_PORT:-8080}:8080"
+      - "${KEYCLOAK_HOST_PORT:-8085}:8080"
     healthcheck:
       test:
         - CMD-SHELL
@@ -187,7 +198,7 @@ services:
       SERVER_PORT: 8084
       DB_NAME: chess_user_profile
       APP_NAME: user-profile-service
-      KEYCLOAK_AUTH_SERVER_URL: http://host.docker.internal:8080
+      KEYCLOAK_AUTH_SERVER_URL: http://host.docker.internal:8085
       KEYCLOAK_REALM: chess-platform
       KEYCLOAK_RESOURCE: user-profile-service
       KEYCLOAK_LOGIN_CLIENT_ID: chess-web

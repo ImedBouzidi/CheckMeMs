@@ -55,7 +55,7 @@ class AppConfig {
     wsUrl: 'ws://$_defaultHost:8081/ws',
     keycloakIssuer: _issuerOverride.isNotEmpty
         ? _issuerOverride
-        : 'http://$_defaultHost:8080/realms/chess-platform',
+        : 'http://$_defaultHost:8085/realms/chess-platform',
     keycloakRealm: 'chess-platform',
     keycloakClientId: 'chess-web',
     features: const AppFeatures(

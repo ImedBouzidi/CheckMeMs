@@ -205,6 +205,7 @@ pipeline {
         stage('Build images') {
             steps {
                 // --pull keeps base images fresh; all images are tagged in docker-compose.yml.
+                // keycloak is built from docker/keycloak/Dockerfile along with the rest.
                 sh 'docker compose build --pull'
             }
         }
@@ -237,7 +238,7 @@ pipeline {
                     // Every service in docker-compose.yml is already tagged
                     // "${registry}/<name>:latest", so compose builds and pushes
                     // the exact images that live on the registry - no re-tagging.
-                    def services = ['eureka', 'gateway', 'games', 'profiles',
+                    def services = ['keycloak', 'eureka', 'gateway', 'games', 'profiles',
                                     'learning', 'analysis', 'events', 'web']
                     withCredentials([usernamePassword(
                             credentialsId: 'dockerhub-creds',
