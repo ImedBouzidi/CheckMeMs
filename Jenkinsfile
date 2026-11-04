@@ -24,7 +24,6 @@ pipeline {
         COMPOSE_DOCKER_CLI_BUILD = '1'
         DOCKER_BUILDKIT = '1'
         JAVA_SERVICE_NAMES = 'eureka-server api-gateway games-service user-profile-service learning-service move-analysis-service kafka-service'
-        APP_IMAGE_PREFIX = 'checkmems'
     }
 
     parameters {
@@ -56,9 +55,10 @@ pipeline {
             when { expression { params.RUN_TESTS } }
             steps {
                 sh '''
-                    # Start PostgreSQL before Keycloak so this remains safe when
-                    # Jenkins reuses a pgdata volume created by an older build.
-                    docker compose up -d --wait \
+                    # Start the Apache Kafka broker (apache/kafka, KRaft combined
+                    # mode) alongside PostgreSQL and Eureka. Compose health-gates
+                    # each one, so --wait blocks until they are all ready.
+                    docker compose up -d --wait \\
                         postgres kafka eureka
 
                     # The compose postgres superuser is chess_user, while the
@@ -108,6 +108,13 @@ pipeline {
                     # CI only needs Keycloak over the Compose network. Let Docker
                     # choose an ephemeral host port to avoid collisions on agents.
                     KEYCLOAK_HOST_PORT=0 docker compose up -d --wait keycloak
+
+                    # Explicit sanity check on the Kafka broker: the compose
+                    # healthcheck may pass while the controller is still fencing,
+                    # and the Kafka-consuming service tests need a usable broker.
+                    docker compose exec -T kafka \\
+                        /opt/kafka/bin/kafka-topics.sh \\
+                        --bootstrap-server kafka:29092 --list >/dev/null
                 '''
             }
         }
@@ -227,20 +234,24 @@ pipeline {
                     // the "docker.io/<namespace>" form sets the Hub namespace but the auth host strips it.
                     def host = (registry.split('/'))[0]
                     def tag = "build-${env.BUILD_NUMBER}"
-                    def images = ['eureka', 'gateway', 'games', 'profiles',
-                                  'learning', 'analysis', 'events', 'web']
+                    // Every service in docker-compose.yml is already tagged
+                    // "${registry}/<name>:latest", so compose builds and pushes
+                    // the exact images that live on the registry - no re-tagging.
+                    def services = ['eureka', 'gateway', 'games', 'profiles',
+                                    'learning', 'analysis', 'events', 'web']
                     withCredentials([usernamePassword(
                             credentialsId: 'dockerhub-creds',
                             usernameVariable: 'REG_USER',
                             passwordVariable: 'REG_PASS')]) {
                         withEnv(["LOGIN_HOST=${host}"]) {
                             sh 'printf "%s\\n" "$REG_PASS" | docker login "$LOGIN_HOST" --username "$REG_USER" --password-stdin'
-                            images.each { svc ->
-                                sh "docker tag ${env.APP_IMAGE_PREFIX}/${svc}:latest ${registry}/${svc}:${tag}"
+                            // Moving target on the registry, like the compose images:
+                            // latest always points at the newest successful build.
+                            sh "docker compose push ${services.join(' ')}"
+                            // Immutable per-build tag on top of the push above.
+                            services.each { svc ->
+                                sh "docker tag ${registry}/${svc}:latest ${registry}/${svc}:${tag}"
                                 sh "docker push ${registry}/${svc}:${tag}"
-                                // Moving target on the registry, like the compose images: latest always points at the newest successful build.
-                                sh "docker tag ${env.APP_IMAGE_PREFIX}/${svc}:latest ${registry}/${svc}:latest"
-                                sh "docker push ${registry}/${svc}:latest"
                             }
                             sh 'docker logout "$LOGIN_HOST"'
                         }

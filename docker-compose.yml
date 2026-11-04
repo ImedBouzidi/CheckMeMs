@@ -9,6 +9,11 @@
 #   http://localhost:8761  Eureka console
 #   :8082 analysis :8083 games :8084 profiles :8088 events :8091 learning (direct)
 #
+# Images are tagged with the Docker Hub namespace directly, so pushing everything
+# after a build is one command:
+#   docker compose build --pull
+#   docker compose push
+#
 # Internal-only (no host port): postgres 5432, kafka 29092(+29093).
 # They never collide with the local dev instances that share the same defaults.
 #
@@ -64,7 +69,8 @@ services:
     networks: [chess-net]
 
   kafka:
-    image: confluentinc/cp-kafka:7.7.1
+    # Apache Kafka 4.4.0, KRaft combined mode (broker + controller in one node).
+    image: apache/kafka:4.4.0
     environment:
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
       KAFKA_NODE_ID: 1
@@ -81,7 +87,7 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     healthcheck:
-      test: ["CMD-SHELL", "/usr/bin/kafka-topics --bootstrap-server kafka:29092 --list >/dev/null 2>&1"]
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --list >/dev/null 2>&1"]
       interval: 10s
       timeout: 10s
       retries: 30
@@ -126,7 +132,7 @@ services:
 
   eureka:
     build: ./eureka-server
-    image: checkmems/eureka:latest
+    image: imedbennington/eureka:latest
     environment: { <<: *java-opts }
     ports:
       - "8761:8761"
@@ -141,7 +147,7 @@ services:
 
   gateway:
     build: ./api-gateway
-    image: checkmems/gateway:latest
+    image: imedbennington/gateway:latest
     environment: { <<: *java-opts }
     ports:
       - "8081:8081"
@@ -156,7 +162,7 @@ services:
 
   games:
     build: ./games-service
-    image: checkmems/games:latest
+    image: imedbennington/games:latest
     environment:
       <<: [*java-opts, *db-env, *keycloak-env]
       SERVER_PORT: 8083
@@ -175,7 +181,7 @@ services:
     build:
       context: .
       dockerfile: user-profile-service/Dockerfile
-    image: checkmems/profiles:latest
+    image: imedbennington/profiles:latest
     environment:
       <<: [*java-opts, *db-env, *keycloak-env]
       SERVER_PORT: 8084
@@ -204,7 +210,7 @@ services:
     build:
       context: .
       dockerfile: learning-service/Dockerfile
-    image: checkmems/learning:latest
+    image: imedbennington/learning:latest
     environment:
       <<: [*java-opts, *db-env, *keycloak-env]
       SERVER_PORT: 8091
@@ -226,7 +232,7 @@ services:
       dockerfile: Dockerfile
       additional_contexts:
         - "stockfish=./stockfish"
-    image: checkmems/analysis:latest
+    image: imedbennington/analysis:latest
     environment:
       <<: [*java-opts, *db-env, *keycloak-env]
       SERVER_PORT: 8082
@@ -251,7 +257,7 @@ services:
 
   events:
     build: ./kafka-service
-    image: checkmems/events:latest
+    image: imedbennington/events:latest
     environment:
       <<: *java-opts
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
@@ -265,7 +271,7 @@ services:
 
   web:
     build: ./chess-web
-    image: checkmems/web:latest
+    image: imedbennington/web:latest
     ports:
       - "4200:80"
     restart: unless-stopped
