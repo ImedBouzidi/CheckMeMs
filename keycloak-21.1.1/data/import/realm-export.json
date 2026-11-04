@@ -1,0 +1,340 @@
+{
+  "realm": "chess-platform",
+  "enabled": true,
+  "displayName": "CheckMe Chess Platform",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "verifyEmail": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "CLIENT",
+        "description": "Standard chess platform user"
+      },
+      {
+        "name": "ADMIN",
+        "description": "Chess platform administrator"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "chess-web",
+      "name": "CheckMe Chess Web",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:4200/*",
+        "http://127.0.0.1:4200/*",
+        "http://angular-front:4200/*"
+      ],
+      "webOrigins": [
+        "http://localhost:4200",
+        "http://127.0.0.1:4200",
+        "http://angular-front:4200"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    },
+    {
+      "clientId": "api-gateway",
+      "name": "CheckMe API Gateway",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:8081/*",
+        "http://api-gateway:8081/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8081",
+        "http://api-gateway:8081"
+      ]
+    },
+    {
+      "clientId": "user-profile-service",
+      "name": "CheckMe User Profile Service",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "secret": "WYs5nX2LrnlaQPkH4Hmy4LWqNCYVaIWP",
+      "redirectUris": [
+        "http://localhost:8084/*",
+        "http://user-profile-service:8084/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8084",
+        "http://user-profile-service:8084"
+      ]
+    },
+    {
+      "clientId": "review-service",
+      "name": "CheckMe Review Service",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:8083/*",
+        "http://review-service:8083/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8083",
+        "http://review-service:8083"
+      ]
+    },
+    {
+      "clientId": "analysis-service",
+      "name": "CheckMe Analysis Service",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:8082/*",
+        "http://analysis-service:8082/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8082",
+        "http://analysis-service:8082"
+      ]
+    },
+    {
+      "clientId": "opening-service",
+      "name": "CheckMe Opening Service",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:8085/*",
+        "http://opening-service:8085/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8085",
+        "http://opening-service:8085"
+      ]
+    },
+    {
+      "clientId": "puzzle-service",
+      "name": "CheckMe Puzzle Service",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:8086/*",
+        "http://puzzle-service:8086/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8086",
+        "http://puzzle-service:8086"
+      ]
+    },
+    {
+      "clientId": "engine-bot-service",
+      "name": "CheckMe Engine Bot Service",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:8087/*",
+        "http://engine-bot-service:8087/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8087",
+        "http://engine-bot-service:8087"
+      ]
+    },
+    {
+      "clientId": "play-service",
+      "name": "CheckMe Play Service",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:8088/*",
+        "http://play-service:8088/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8088",
+        "http://play-service:8088"
+      ]
+    },
+    {
+      "clientId": "matchmaking-service",
+      "name": "CheckMe Matchmaking Service",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:8089/*",
+        "http://matchmaking-service:8089/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8089",
+        "http://matchmaking-service:8089"
+      ]
+    },
+    {
+      "clientId": "rating-service",
+      "name": "CheckMe Rating Service",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:8090/*",
+        "http://rating-service:8090/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8090",
+        "http://rating-service:8090"
+      ]
+    },
+    {
+      "clientId": "learning-service",
+      "name": "CheckMe Learning Service",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:8091/*",
+        "http://learning-service:8091/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8091",
+        "http://learning-service:8091"
+      ]
+    },
+    {
+      "clientId": "notification-service",
+      "name": "CheckMe Notification Service",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:8092/*",
+        "http://notification-service:8092/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8092",
+        "http://notification-service:8092"
+      ]
+    },
+    {
+      "clientId": "fairplay-moderation-service",
+      "name": "CheckMe Fairplay Moderation Service",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:8093/*",
+        "http://fairplay-moderation-service:8093/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8093",
+        "http://fairplay-moderation-service:8093"
+      ]
+    },
+    {
+      "clientId": "game-service",
+      "name": "CheckMe Game Service",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:8094/*",
+        "http://game-service:8094/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8094",
+        "http://game-service:8094"
+      ]
+    }
+  ],
+  "defaultDefaultClientScopes": [
+    "web-origins",
+    "acr",
+    "profile",
+    "roles",
+    "basic",
+    "email"
+  ],
+  "defaultOptionalClientScopes": [
+    "address",
+    "phone",
+    "offline_access",
+    "microprofile-jwt"
+  ],
+  "scopeMappings": [
+    {
+      "client": "user-profile-service",
+      "roles": [
+        "manage-users"
+      ]
+    }
+  ]
+}
