@@ -55,11 +55,13 @@ pipeline {
             when { expression { params.RUN_TESTS } }
             steps {
                 sh '''
-                    # Start the Apache Kafka broker (apache/kafka, KRaft combined
-                    # mode) alongside PostgreSQL and Eureka. Compose health-gates
-                    # each one, so --wait blocks until they are all ready.
-                    docker compose up -d --wait \\
-                        postgres kafka eureka
+                    # Keycloak first: it is the component most likely to fail
+                    # (realm import, DB connect), so fail fast before Kafka,
+                    # Eureka and the test matrix have any time invested.
+                    # It still must boot after the `keycloak` database exists,
+                    # so postgres starts now and that DB is created below
+                    # BEFORE Keycloak comes up.
+                    docker compose up -d --wait postgres
 
                     # The compose postgres superuser is chess_user, while the
                     # service .env files use imed/admin. Create that role and
@@ -105,9 +107,15 @@ pipeline {
                             createdb -U chess_user -O chess_user keycloak
                     fi
 
-                    # CI only needs Keycloak over the Compose network. Let Docker
-                    # choose an ephemeral host port to avoid collisions on agents.
+                    # Keycloak DB exists now -> boot Keycloak (auto-builds the
+                    # imedbennington/keycloak image on first use) and wait for
+                    # the realm import + health to be green.
                     KEYCLOAK_HOST_PORT=0 docker compose up -d --wait keycloak
+
+                    # Kafka and Eureka start after Keycloak is verified.
+                    # Compose health-gates each one, so --wait blocks until
+                    # they are all ready.
+                    docker compose up -d --wait kafka eureka
 
                     # Explicit sanity check on the Kafka broker: the compose
                     # healthcheck may pass while the controller is still fencing,
