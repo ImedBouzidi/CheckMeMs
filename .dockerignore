@@ -1,5 +1,5 @@
 # Root context is used by the keycloak Dockerfile (COPYs the realm export from
-# keycloak-21.1.1) and by the move-analysis build (which gets the Stockfish
+# docker/keycloak/) and by the move-analysis build (which gets the Stockfish
 # sources as an extra `stockfish=./stockfish` context). The Keycloak
 # distribution directories are the only genuinely heavy parts; the data dir
 # (realm export) stays in the context so the keycloak image can COPY it.

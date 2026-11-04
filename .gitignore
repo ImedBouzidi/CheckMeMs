@@ -91,14 +91,10 @@ gradle-app.setting
 # Generated files
 coverage/
 .nyc_output/
-# Local Keycloak distribution: ignore everything except the realm export,
-# which the keycloak Docker build COPYs from the root context. (A file can't
-# be re-included while any parent dir is ignored, hence `/*` + dir negations.)
-keycloak-21.1.1/*
-!keycloak-21.1.1/data/
-!keycloak-21.1.1/data/import/
-!keycloak-21.1.1/data/import/realm-export.json
-# The stray export at the distribution root is a byproduct, keep ignoring it (default).
+# Local Keycloak distribution (binaries are vendored here only for local dev;
+# the realm export lives in docker/keycloak/realm-export.json and is tracked
+# there, so nothing in the image build depends on this directory).
+keycloak-21.1.1/
 
 # Local Kafka distribution and KRaft state
 kafka_2.13-4.4.0/

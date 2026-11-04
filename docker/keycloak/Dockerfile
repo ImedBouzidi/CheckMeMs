@@ -8,4 +8,4 @@
 #   docker build -t imedbennington/keycloak:latest -f docker/keycloak/Dockerfile .
 #   docker push imedbennington/keycloak:latest
 FROM quay.io/keycloak/keycloak:21.1.1
-COPY keycloak-21.1.1/data/import/realm-export.json /opt/keycloak/data/import/realm-export.json
+COPY docker/keycloak/realm-export.json /opt/keycloak/data/import/realm-export.json
