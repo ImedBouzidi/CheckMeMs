@@ -116,10 +116,7 @@ services:
       KC_DB_USERNAME: chess_user
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-chess_pass}
       # Frontend URL (auth redirects, iss claim) tracks the published host port.
-      # Keycloak does not parse a full URL in KC_HOSTNAME - use the
-      # host/port pair instead.
-      KC_HOSTNAME: localhost
-      KC_HOSTNAME_PORT: ${KEYCLOAK_HOST_PORT:-8085}
+      KC_HOSTNAME: http://localhost:${KEYCLOAK_HOST_PORT:-8085}
       KC_HEALTH_ENABLED: "true"
     ports:
       - "${KEYCLOAK_HOST_PORT:-8085}:10000"
@@ -127,7 +124,7 @@ services:
       test:
         - CMD-SHELL
         - >-
-          bash -c 'exec 3<>/dev/tcp/127.0.0.1/10000;
+          bash -c 'exec 3<>/dev/tcp/127.0.0.1/9000;
           printf "GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3;
           grep -q "200" <&3'
       interval: 10s
