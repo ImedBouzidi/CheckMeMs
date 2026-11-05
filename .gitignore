@@ -91,10 +91,11 @@ gradle-app.setting
 # Generated files
 coverage/
 .nyc_output/
-# Local Keycloak distribution (binaries are vendored here only for local dev;
-# the realm export lives in docker/keycloak/realm-export.json and is tracked
-# there, so nothing in the image build depends on this directory).
+# Local Keycloak distribution (binaries are vendored here only for local dev).
 keycloak-21.1.1/
+!keycloak-21.1.1/
+keycloak-21.1.1/*
+!keycloak-21.1.1/Dockerfile
 
 # Local Kafka distribution and KRaft state
 kafka_2.13-4.4.0/
