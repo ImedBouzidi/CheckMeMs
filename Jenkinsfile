@@ -213,7 +213,7 @@ pipeline {
         stage('Build images') {
             steps {
                 // --pull keeps base images fresh; all images are tagged in docker-compose.yml.
-                // keycloak is built from keycloak-21.1.1/Dockerfile along with the rest.
+                // keycloak is built from docker/keycloak/Dockerfile along with the rest.
                 sh 'docker compose build --pull'
             }
         }
@@ -280,14 +280,26 @@ pipeline {
 
     post {
         always {
-            sh 'docker compose ps || true'
+            script {
+                if (getContext(hudson.FilePath)) {
+                    sh 'docker compose ps || true'
+                }
+            }
         }
         failure {
-            sh 'docker compose logs --tail 100 > failure-logs.txt 2>&1 || true'
-            archiveArtifacts artifacts: 'failure-logs.txt', allowEmptyArchive: true
+            script {
+                if (getContext(hudson.FilePath)) {
+                    sh 'docker compose logs --tail 100 > failure-logs.txt 2>&1 || true'
+                    archiveArtifacts artifacts: 'failure-logs.txt', allowEmptyArchive: true
+                }
+            }
         }
         unstable {
-            sh 'docker compose ps || true'
+            script {
+                if (getContext(hudson.FilePath)) {
+                    sh 'docker compose ps || true'
+                }
+            }
         }
     }
 }

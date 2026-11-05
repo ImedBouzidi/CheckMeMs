@@ -104,7 +104,7 @@ services:
     image: imedbennington/keycloak:latest
     build:
       context: .
-      dockerfile: keycloak-21.1.1/Dockerfile
+      dockerfile: docker/keycloak/Dockerfile
     command: ["--import-realm"]
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USERNAME:-admin}
