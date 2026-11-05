@@ -1644,6 +1644,7 @@ export class AnalysisComponent implements OnInit, OnDestroy {
 
   /** A rejected token is a sign-in problem, not a broken review. */
   get needsSignIn(): boolean {
+    if (this.auth.demoMode) return false;
     return this.failureStatus === 401 || this.failureStatus === 403 || !this.auth.isAuthenticated();
   }
 

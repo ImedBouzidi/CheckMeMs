@@ -88,7 +88,12 @@ import { ThemeService } from '../../core/services/theme.service';
         </button>
       </div>
 
-      @if (authService.isAuthenticated()) {
+      @if (authService.demoMode) {
+        <span class="demo-pill" [attr.title]="language.t('nav.demoNotice')">
+          <mat-icon>science</mat-icon>
+          <span>{{ language.t('nav.demo') }}</span>
+        </span>
+      } @else if (authService.isAuthenticated()) {
         <button mat-button class="account-button" type="button" [matMenuTriggerFor]="userMenu">
           <span class="account-avatar">{{ getInitials() }}</span>
           <span class="account-copy">
@@ -232,8 +237,8 @@ import { ThemeService } from '../../core/services/theme.service';
         </div>
 
         <div class="sidenav-footer">
-          <span>{{ language.t('nav.footer') }}</span>
-          <mat-icon aria-hidden="true">auto_awesome</mat-icon>
+          <span>{{ authService.demoMode ? language.t('nav.demoNotice') : language.t('nav.footer') }}</span>
+          <mat-icon aria-hidden="true">{{ authService.demoMode ? 'science' : 'auto_awesome' }}</mat-icon>
         </div>
       </mat-sidenav>
 
@@ -433,6 +438,29 @@ import { ThemeService } from '../../core/services/theme.service';
       height: 18px;
       color: #94a3b8;
       font-size: 18px;
+    }
+
+    .demo-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid rgba(250, 204, 21, 0.45);
+      border-radius: 999px;
+      background: rgba(250, 204, 21, 0.12);
+      color: #fde68a;
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: help;
+    }
+
+    .demo-pill mat-icon {
+      width: 16px;
+      height: 16px;
+      font-size: 16px;
     }
 
     .toolbar-login {

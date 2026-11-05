@@ -1,10 +1,12 @@
 import { Routes } from '@angular/router';
 import { ShellComponent } from './layout/shell/shell.component';
 import { authGuard } from './core/guards/auth.guard';
+import { demoRedirectGuard } from './core/guards/demo-redirect.guard';
 
 export const routes: Routes = [
   {
     path: 'auth',
+    canActivate: [demoRedirectGuard],
     children: [
       {
         path: 'login',

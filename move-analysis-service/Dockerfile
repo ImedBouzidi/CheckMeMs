@@ -1,21 +1,20 @@
 # move-analysis-service — (port 8082), runs Stockfish beside the app.
 #
-# NOTE: the Stockfish sources live outside this folder (../stockfish/src), so the build
-# needs the extra build context. Compose provides it via `additional_contexts`; standalone:
+# Stockfish is supplied as a pre-built x86-64 binary from the stockfish build
+# context (stockfish/stockfish-linux-x86-64-universal), so this image requires
+# no network access, no C++ toolchain, and no NNUE weight download at build time.
+#
+# The build context is provided by Compose via `additional_contexts`:
+#   additional_contexts:
+#     - "stockfish=./stockfish"
+#
+# Standalone build:
 #   docker build -t checkmems/move-analysis-service \
 #     --build-context stockfish=../stockfish ./move-analysis-service
 #
-# Stage 1 is x86-64 only; on ARM (Apple Silicon) use binaries for the target platform or
-# change ARCH (see https://github.com/official-stockfish/Stockfish).
-FROM debian:bookworm-slim AS stockfish-build
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential ca-certificates curl \
-    && rm -rf /var/lib/apt/lists/*
-COPY --from=stockfish src /build/src
-COPY --from=stockfish scripts /build/scripts
-WORKDIR /build/src
-# The first build downloads the default NNUE nets (needs network access).
-RUN make -j4 net && make -j4 build ARCH=x86-64
+# On ARM (Apple Silicon / Graviton) replace the binary with the matching
+# official release from https://github.com/official-stockfish/Stockfish/releases
+# and rebuild.
 
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
@@ -28,7 +27,9 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 COPY --from=build /app/target/*.jar app.jar
-COPY --from=stockfish-build /build/src/stockfish /usr/bin/stockfish
+# Copy the pre-built universal binary; rename it to 'stockfish' for a stable STOCKFISH_PATH.
+COPY --from=stockfish stockfish-linux-x86-64-universal /usr/bin/stockfish
+RUN chmod +x /usr/bin/stockfish
 # Config default in application-docker.yml
 ENV STOCKFISH_PATH=/usr/bin/stockfish
 EXPOSE 8082

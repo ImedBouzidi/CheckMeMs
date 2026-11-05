@@ -40,7 +40,7 @@ x-db-env: &db-env
   EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
 
 x-keycloak-env: &keycloak-env
-  # The realm is imported from keycloak-21.1.1/realm-export.json. The
+  # The realm is imported from docker/keycloak/realm-export.json. The
   # compose Keycloak runs on host port KEYCLOAK_HOST_PORT (default 8085) and
   # KC_HOSTNAME advertises that, so JWTs the browser mints carry
   # iss=http://localhost:8085/...; resource servers must compare against that
@@ -105,10 +105,9 @@ services:
     build:
       context: .
       dockerfile: docker/keycloak/Dockerfile
-    command: ["--import-realm"]
     environment:
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USERNAME:-admin}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
       KC_DB: postgres
       KC_DB_URL_HOST: postgres
       KC_DB_URL_PORT: 5432
@@ -233,7 +232,7 @@ services:
     networks: [chess-net]
 
   analysis:
-    # Builds Stockfish from ../stockfish in an extra context (see Dockerfile header).
+    # Uses the pre-built x86-64 binary from ./stockfish/ (see Dockerfile header).
     build:
       context: ./move-analysis-service
       dockerfile: Dockerfile

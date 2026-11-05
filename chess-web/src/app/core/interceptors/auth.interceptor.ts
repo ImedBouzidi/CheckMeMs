@@ -11,6 +11,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
+  if (auth.demoMode) {
+    return next(req.clone({ setHeaders: { 'X-Demo-User': auth.demoUserId ?? 'demo' } }));
+  }
+
   const send = (token: string | null): Observable<HttpEvent<unknown>> =>
     next(token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req);
 

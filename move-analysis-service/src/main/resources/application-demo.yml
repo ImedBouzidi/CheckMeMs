@@ -1,0 +1,5 @@
+spring:
+  autoconfigure:
+    exclude:
+      # The demo principal comes from X-Demo-User; never contact Keycloak/JWKS.
+      - org.springframework.boot.security.oauth2.server.resource.autoconfigure.OAuth2ResourceServerAutoConfiguration

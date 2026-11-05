@@ -1,0 +1,159 @@
+# CheckMeMS — public no-login demo
+#
+#   docker compose -f docker-compose.demo.yml up -d --build
+#
+# Only the web container publishes a port (WEB_PORT, default 80). The API is
+# reached through nginx at /api, so the Angular demo build needs no host URLs
+# and no CORS. Keycloak, user-profile, learning and events are intentionally
+# not part of this stack: the `demo` Spring profile supplies a per-browser
+# synthetic principal (X-Demo-User) instead.
+#
+# Resource guidance: 4 GB RAM / 2 vCPU minimum, 8 GB comfortable.
+#
+# The full authenticated stack remains available through docker-compose.yml.
+
+name: checkmems-demo
+
+networks:
+  chess-demo-net:
+
+volumes:
+  demo-pgdata:
+
+x-db-env: &db-env
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_USERNAME: chess_user
+  DB_PASSWORD: ${POSTGRES_PASSWORD:-chess_pass}
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+
+# The demo profile excludes OAuth2 auto-configuration, but application-docker.yml
+# still declares these properties. Dummy values keep placeholder resolution happy;
+# no Keycloak connection is ever attempted.
+x-demo-oauth: &demo-oauth
+  OAUTH2_ISSUER_URI: http://localhost:0/realms/demo
+  OAUTH2_JWK_SET_URI: http://localhost:0/realms/demo/protocol/openid-connect/certs
+
+x-java-opts: &java-opts
+  SPRING_PROFILES_ACTIVE: docker,demo
+  JAVA_TOOL_OPTIONS: -Duser.timezone=UTC
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: chess_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chess_pass}
+      POSTGRES_DB: chess_user_profile
+    volumes:
+      - demo-pgdata:/var/lib/postgresql/data
+      - ./docker/postgres-init-multiple-dbs.sql:/docker-entrypoint-initdb.d/10-multiple-dbs.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chess_user -d chess_user_profile"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    networks: [chess-demo-net]
+
+  kafka:
+    image: apache/kafka:4.4.0
+    environment:
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_LISTENERS: PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx512m"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+    networks: [chess-demo-net]
+
+  eureka:
+    build: ./eureka-server
+    image: imedbennington/eureka:latest
+    environment: { <<: *java-opts }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+    networks: [chess-demo-net]
+
+  gateway:
+    build: ./api-gateway
+    image: imedbennington/gateway:latest
+    environment: { <<: *java-opts }
+    depends_on:
+      eureka: { condition: service_healthy }
+    restart: unless-stopped
+    networks: [chess-demo-net]
+
+  games:
+    build: ./games-service
+    image: imedbennington/games-demo:latest
+    environment:
+      <<: [*java-opts, *db-env, *demo-oauth]
+      SERVER_PORT: 8083
+      DB_NAME: chess_game
+    depends_on:
+      postgres: { condition: service_healthy }
+      eureka: { condition: service_healthy }
+    restart: unless-stopped
+    networks: [chess-demo-net]
+
+  analysis:
+
+    build:
+      context: ./move-analysis-service
+      dockerfile: Dockerfile
+      additional_contexts:
+        - "stockfish=./stockfish"
+    image: imedbennington/analysis-demo:latest
+    environment:
+      <<: [*java-opts, *db-env, *demo-oauth]
+      SERVER_PORT: 8082
+      APP_NAME: analysis-service
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      STOCKFISH_PATH: /usr/bin/stockfish
+      STOCKFISH_POOL_SIZE: ${STOCKFISH_POOL_SIZE:-1}
+      STOCKFISH_THREADS: ${STOCKFISH_THREADS:-2}
+      STOCKFISH_HASH: ${STOCKFISH_HASH:-128}
+      STOCKFISH_DEPTH: ${STOCKFISH_DEPTH:-12}
+      ANALYSIS_WORKER_CONCURRENCY: ${ANALYSIS_WORKER_CONCURRENCY:-1}
+    depends_on:
+      postgres: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+      eureka: { condition: service_healthy }
+    restart: unless-stopped
+    networks: [chess-demo-net]
+
+  web:
+    build:
+      context: ./chess-web
+      args:
+        NG_BUILD_CONFIG: demo
+    image: imedbennington/web-demo:latest
+    ports:
+      - "${WEB_PORT:-80}:80"
+    depends_on:
+      gateway: { condition: service_started }
+    restart: unless-stopped
+    networks: [chess-demo-net]

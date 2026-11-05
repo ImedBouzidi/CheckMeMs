@@ -5,9 +5,8 @@ RUN /opt/keycloak/bin/kc.sh build
 
 FROM quay.io/keycloak/keycloak:26.0
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
-COPY realm-export.json /opt/keycloak/data/import/realm-export.json
+COPY docker/keycloak/realm-export.json /opt/keycloak/data/import/realm-export.json
 
-ENV JAVA_OPTS_KC_HEAP="-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30"
 ENV KC_HTTP_ENABLED=true
 ENV KC_HTTP_PORT=10000
 ENV KC_PROXY_HEADERS=xforwarded

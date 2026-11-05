@@ -66,6 +66,32 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "demo": {
+              "fileReplacements": [
+                {
+                  "replace": "src/app/core/config/app-config.ts",
+                  "with": "src/app/core/config/app-config.demo.ts"
+                }
+              ],
+              "optimization": {
+                "scripts": true,
+                "styles": true,
+                "fonts": false
+              },
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "1MB",
+                  "maximumError": "2MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "16kB",
+                  "maximumError": "25kB"
+                }
+              ],
+              "outputHashing": "all"
             }
           },
           "defaultConfiguration": "production"
@@ -78,6 +104,10 @@
             },
             "development": {
               "buildTarget": "chess-web:build:development"
+            },
+            "demo": {
+              "buildTarget": "chess-web:build:demo",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

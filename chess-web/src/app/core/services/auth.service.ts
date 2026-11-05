@@ -37,7 +37,29 @@ const ACCESS_TOKEN_KEY = 'access_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
 const EXPIRES_AT_KEY = 'token_expires_at';
 const USER_KEY = 'current_user';
+const DEMO_USER_ID_KEY = 'checkme.demo.user-id';
 const GUEST_SCOPE = 'guest';
+
+/**
+ * A browser-stable id for the no-login demo. It is sent as `X-Demo-User` and
+ * becomes the principal in the backend `demo` profile, keeping each visitor's
+ * games and analysis separate without accounts.
+ */
+function getOrCreateDemoId(): string {
+  const fallback = `demo-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  try {
+    const existing = localStorage.getItem(DEMO_USER_ID_KEY);
+    if (existing && /^demo-[A-Za-z0-9_-]{4,64}$/.test(existing)) return existing;
+
+    const generated = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? `demo-${crypto.randomUUID()}`
+      : fallback;
+    localStorage.setItem(DEMO_USER_ID_KEY, generated);
+    return generated;
+  } catch {
+    return fallback;
+  }
+}
 
 /** Stable identifier for the session owner; local progress is stored per scope. */
 function scopeOf(token: string | null): string {
@@ -61,6 +83,10 @@ export class AuthService {
   private router = inject(Router);
   private config = inject(APP_CONFIG_TOKEN);
 
+  /** Hosted no-login demo build. */
+  readonly demoMode = this.config.demoMode;
+  readonly demoUserId: string | null = this.config.demoMode ? getOrCreateDemoId() : null;
+
   isAuthenticated = signal<boolean>(false);
   currentUser = signal<User | null>(null);
   accountScope = signal<string>(GUEST_SCOPE);
@@ -74,7 +100,11 @@ export class AuthService {
   });
 
   constructor() {
-    this.restoreSession();
+    if (this.demoMode) {
+      this.startDemoSession();
+    } else {
+      this.restoreSession();
+    }
   }
 
   /** Only a signed JWT counts: earlier demo builds stored `mock_access_token_…` values. */
@@ -116,6 +146,7 @@ export class AuthService {
   }
 
   async login(credentials: LoginCredentials): Promise<boolean> {
+    if (this.demoMode) return false;
     if (!credentials.email || !credentials.password) return false;
 
     try {
@@ -130,6 +161,7 @@ export class AuthService {
   }
 
   async register(data: RegisterData): Promise<boolean> {
+    if (this.demoMode) return false;
     if (!data.email || !data.password || !data.username) return false;
 
     try {
@@ -144,6 +176,7 @@ export class AuthService {
   }
 
   loginWithGoogle(): void {
+    if (this.demoMode) return;
     console.log('Redirecting to Google OAuth...');
     // In production, integrate with Keycloak or Google OAuth
     const mockUser: User = {
@@ -164,11 +197,20 @@ export class AuthService {
   }
 
   logout(): void {
+    if (this.demoMode) {
+      // Nothing to sign out of; keep the same browser identity and progress.
+      this.startDemoSession();
+      this.router.navigate(['/']);
+      return;
+    }
+
     this.clearSession();
     this.router.navigate(['/auth/login']);
   }
 
   private async performRefresh(): Promise<boolean> {
+    if (this.demoMode) return false;
+
     const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
     if (!refreshToken) return false;
 
@@ -215,11 +257,37 @@ export class AuthService {
     this.accountScope.set(scopeOf(accessToken));
   }
 
-  private clearSession(): void {
+  /**
+   * Demo builds never hold a JWT. The synthetic user exists so existing UI and
+   * storage-scope logic keep working; the backend recognizes the browser via
+   * the `X-Demo-User` header instead of a bearer token.
+   */
+  private startDemoSession(): void {
+    this.clearStoredAuth();
+    const id = this.demoUserId ?? 'demo';
+    const user: User = {
+      id,
+      email: 'demo@checkme.local',
+      firstName: 'Demo',
+      lastName: 'Player',
+      username: 'demo',
+      provider: 'local'
+    };
+
+    this.currentUser.set(user);
+    this.isAuthenticated.set(true);
+    this.accountScope.set(id);
+  }
+
+  private clearStoredAuth(): void {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(EXPIRES_AT_KEY);
     localStorage.removeItem(USER_KEY);
+  }
+
+  private clearSession(): void {
+    this.clearStoredAuth();
     this.isAuthenticated.set(false);
     this.currentUser.set(null);
     this.accountScope.set(GUEST_SCOPE);

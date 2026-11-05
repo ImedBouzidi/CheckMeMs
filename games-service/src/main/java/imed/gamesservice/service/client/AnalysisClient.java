@@ -20,6 +20,7 @@ import reactor.core.publisher.Mono;
 public class AnalysisClient {
 
     private static final Logger log = LoggerFactory.getLogger(AnalysisClient.class);
+    private static final String DEMO_USER_HEADER = "X-Demo-User";
 
     private final WebClient webClient;
 
@@ -57,6 +58,13 @@ public class AnalysisClient {
                 request = request.header(HttpHeaders.AUTHORIZATION, authorization);
             }
 
+            // In the no-login demo the caller identity travels as a header instead
+            // of a JWT; forward it so analysis ownership matches games ownership.
+            String demoUser = currentDemoUser();
+            if (demoUser != null && !demoUser.isBlank()) {
+                request = request.header(DEMO_USER_HEADER, demoUser);
+            }
+
             Map response = request.bodyValue(payload)
                     .retrieve()
                     .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(), clientResponse -> {
@@ -90,6 +98,14 @@ public class AnalysisClient {
         RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
         if (attributes instanceof ServletRequestAttributes servletAttributes) {
             return servletAttributes.getRequest().getHeader(HttpHeaders.AUTHORIZATION);
+        }
+        return null;
+    }
+
+    private String currentDemoUser() {
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        if (attributes instanceof ServletRequestAttributes servletAttributes) {
+            return servletAttributes.getRequest().getHeader(DEMO_USER_HEADER);
         }
         return null;
     }
