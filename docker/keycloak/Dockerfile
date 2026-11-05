@@ -1,6 +1,17 @@
+FROM quay.io/keycloak/keycloak:26.0 AS builder
+ENV KC_DB=postgres
+ENV KC_HEALTH_ENABLED=true
+RUN /opt/keycloak/bin/kc.sh build
+
 FROM quay.io/keycloak/keycloak:26.0
-COPY docker/keycloak/realm-export.json /opt/keycloak/data/import/realm-export.json
-ENV KC_BOOTSTRAP_ADMIN_USERNAME=admin
-ENV KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+COPY --from=builder /opt/keycloak/ /opt/keycloak/
+COPY realm-export.json /opt/keycloak/data/import/realm-export.json
+
+ENV JAVA_OPTS_KC_HEAP="-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30"
+ENV KC_HTTP_ENABLED=true
 ENV KC_HTTP_PORT=10000
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start-dev"]
+ENV KC_PROXY_HEADERS=xforwarded
+ENV KC_HOSTNAME_STRICT=false
+
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
+CMD ["start", "--optimized", "--import-realm"]
