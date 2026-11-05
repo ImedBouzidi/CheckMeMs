@@ -146,9 +146,9 @@ pipeline {
                                 -e SERVER_PORT=0
                                 -e KAFKA_BOOTSTRAP_SERVERS=kafka:29092
                                 -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
-                                -e OAUTH2_ISSUER_URI=http://keycloak:8080/realms/chess-platform
-                                -e OAUTH2_JWK_SET_URI=http://keycloak:8080/realms/chess-platform/protocol/openid-connect/certs
-                                -e KEYCLOAK_AUTH_SERVER_URL=http://keycloak:8080
+                                -e OAUTH2_ISSUER_URI=http://keycloak:10000/realms/chess-platform
+                                -e OAUTH2_JWK_SET_URI=http://keycloak:10000/realms/chess-platform/protocol/openid-connect/certs
+                                -e KEYCLOAK_AUTH_SERVER_URL=http://keycloak:10000
                                 -e KEYCLOAK_REALM=chess-platform
                                 -e KEYCLOAK_RESOURCE=user-profile-service
                                 -e KEYCLOAK_LOGIN_CLIENT_ID=chess-web
@@ -213,7 +213,7 @@ pipeline {
         stage('Build images') {
             steps {
                 // --pull keeps base images fresh; all images are tagged in docker-compose.yml.
-                // keycloak is built from docker/keycloak/Dockerfile along with the rest.
+                // keycloak is built from keycloak-21.1.1/Dockerfile along with the rest.
                 sh 'docker compose build --pull'
             }
         }
