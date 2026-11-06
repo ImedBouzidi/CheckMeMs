@@ -21,6 +21,7 @@ import { Chess, Square } from 'chess.js';
 
 import { StockfishEngineService } from '../../core/services/stockfish-engine.service';
 import { MoveAnalysisApiService, AnalysisReport, AnalysisSummary, MoveGrade, playerOpening as resolvePlayerOpening } from '../../core/services/move-analysis-api.service';
+import { APP_CONFIG_TOKEN } from '../../core/tokens/app-config.token';
 import { GameHistoryService } from '../../core/services/game-history.service';
 import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/i18n/language.service';
@@ -1840,6 +1841,7 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private subs: Subscription[] = [];
+  private readonly appConfig = inject(APP_CONFIG_TOKEN);
 
   constructor(
     private route: ActivatedRoute,
@@ -2270,6 +2272,9 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private submitLiveMove(move: { color: 'w' | 'b'; san: string; from: string; to: string; promotion?: string },
                           fenBefore: string, fenAfter: string): void {
+    // Without Kafka there is no live consumer. The finished PGN is analysed in
+    // one batch instead (see beginAnalysis), so don't send doomed requests.
+    if (!this.appConfig.features.enableLiveAnalysis) return;
     if (!this.auth.isAuthenticated()) return;
     const uci = `${move.from}${move.to}${move.promotion ?? ''}`;
     this.analysisApi.submitLiveMove({
@@ -2585,20 +2590,25 @@ export class GameVsBotComponent implements OnInit, OnDestroy, AfterViewInit {
     this.startAnalysisTimer();
 
     const pgn = this.chess.pgn();
-    const subscription = this.analysisApi
-      .finalizeLive(this.liveAnalysisGameId, this.moveHistory.length, pgn)
-      .pipe(
-        switchMap(() => this.analysisApi.watchByGameId(this.liveAnalysisGameId)),
-        catchError(error => {
-          // No live job to close, for example a game played while signed out: analyse the PGN.
-          if (error?.status === 404) {
-            return this.analysisApi.submit(pgn, this.liveAnalysisGameId)
-              .pipe(switchMap(submitted => this.analysisApi.watch(submitted.requestId)));
-          }
-          return throwError(() => error);
-        })
-      )
-      .subscribe({
+    const review$ = this.appConfig.features.enableLiveAnalysis
+      ? this.analysisApi
+          .finalizeLive(this.liveAnalysisGameId, this.moveHistory.length, pgn)
+          .pipe(
+            switchMap(() => this.analysisApi.watchByGameId(this.liveAnalysisGameId)),
+            catchError(error => {
+              // No live job to close, for example a game played while signed out: analyse the PGN.
+              if (error?.status === 404) {
+                return this.analysisApi.submit(pgn, this.liveAnalysisGameId)
+                  .pipe(switchMap(submitted => this.analysisApi.watch(submitted.requestId)));
+              }
+              return throwError(() => error);
+            })
+          )
+      : this.analysisApi
+          .submit(pgn, this.liveAnalysisGameId)
+          .pipe(switchMap(submitted => this.analysisApi.watch(submitted.requestId)));
+
+    const subscription = review$.subscribe({
         next: report => {
           this.analysisRequestId = report.requestId;
           this.analysisExpectedPlies = Math.max(this.analysisExpectedPlies, report.moveCount);

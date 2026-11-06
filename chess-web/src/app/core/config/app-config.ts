@@ -17,7 +17,8 @@ export const APP_CONFIG: AppConfig = {
     enableEngine: true,
     enablePuzzles: true,
     enableOpenings: true,
-    enableLearning: true
+    enableLearning: true,
+    enableLiveAnalysis: true
   },
   demoMode: false
 };

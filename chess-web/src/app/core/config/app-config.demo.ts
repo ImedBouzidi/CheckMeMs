@@ -21,7 +21,10 @@ export const APP_CONFIG: AppConfig = {
     enableEngine: true,
     enablePuzzles: true,
     enableOpenings: true,
-    enableLearning: true
+    enableLearning: true,
+    // The Render demo has no Kafka. Skip the live stream and review the PGN
+    // in one batch when the game ends.
+    enableLiveAnalysis: false
   },
   demoMode: true
 };

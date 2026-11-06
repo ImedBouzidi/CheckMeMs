@@ -9,6 +9,9 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 RUN npx ng build --configuration ${NG_BUILD_CONFIG}
+# Pre-compress the ~95 MB Stockfish WASM once at build time. nginx serves the
+# .gz via gzip_static, cutting the first-load download to roughly 75 MB.
+RUN node -e "const fs=require('fs'),z=require('zlib');const p='dist/chess-web/browser/assets/stockfish/stockfish-19-single.wasm';fs.writeFileSync(p+'.gz',z.gzipSync(fs.readFileSync(p),{level:9}))"
 
 FROM nginx:1.27-alpine
 

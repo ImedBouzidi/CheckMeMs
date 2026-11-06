@@ -12,6 +12,14 @@ export class StockfishEngineService {
   private bestMove$ = new Subject<EngineBestMove>();
   private ready = false;
   private isThinking = false;
+  private initPromise: Promise<void> | null = null;
+
+  /**
+   * The engine is a ~95 MB WASM download, so a cold load on a hosted deployment can take far
+   * longer than the old 10 second limit, especially on mobile connections. WASM compilation
+   * adds a few more seconds after the download completes.
+   */
+  private static readonly INIT_TIMEOUT_MS = 120_000;
 
   constructor() {}
 
@@ -28,52 +36,85 @@ export class StockfishEngineService {
   }
 
   init(workerPath: string = 'assets/stockfish/stockfish-19-single.js'): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (this.worker) {
-        resolve();
-        return;
-      }
+    if (this.ready) {
+      return Promise.resolve();
+    }
+    if (this.initPromise) {
+      return this.initPromise;
+    }
 
+    this.initPromise = new Promise<void>((resolve, reject) => {
       this.status$.next('initializing');
-      
+
+      let settled = false;
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      let tempListener: ((event: MessageEvent) => void) | undefined;
+
+      const cleanup = () => {
+        if (timeoutId !== undefined) {
+          clearTimeout(timeoutId);
+        }
+        if (tempListener) {
+          this.worker?.removeEventListener('message', tempListener);
+        }
+      };
+
+      const succeed = () => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        this.ready = true;
+        this.status$.next('ready');
+        resolve();
+      };
+
+      const fail = (error: unknown) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        this.ready = false;
+        this.initPromise = null;
+        this.worker?.terminate();
+        this.worker = null;
+        this.status$.next('error');
+        reject(error instanceof Error ? error : new Error(String(error)));
+      };
+
       try {
-        this.worker = new Worker(workerPath);
-        this.worker.onmessage = (event) => this.handleMessage(event.data);
-        this.worker.onerror = (error) => {
+        const worker = new Worker(workerPath);
+        this.worker = worker;
+
+        worker.onmessage = (event) => this.handleMessage(event.data);
+        worker.onerror = (error) => {
           console.error('Stockfish worker error:', error);
-          this.status$.next('error');
-          reject(error);
+          fail(error);
         };
+
+        tempListener = (event: MessageEvent) => {
+          const data = event.data;
+          if (typeof data !== 'string') return;
+          if (data.includes('uciok')) {
+            this.send('isready');
+          } else if (data.includes('readyok')) {
+            succeed();
+          }
+        };
+        worker.addEventListener('message', tempListener);
 
         this.send('uci');
-        
-        const checkReady = (data: string) => {
-          if (typeof data === 'string') {
-            if (data.includes('uciok')) {
-              this.send('isready');
-            } else if (data.includes('readyok')) {
-              this.ready = true;
-              this.status$.next('ready');
-              this.worker!.removeEventListener('message', tempListener);
-              resolve();
-            }
-          }
-        };
-        
-        const tempListener = (event: MessageEvent) => checkReady(event.data);
-        this.worker.addEventListener('message', tempListener);
-        
-        setTimeout(() => {
-          if (!this.ready) {
-            this.worker?.removeEventListener('message', tempListener);
-            reject(new Error('Stockfish initialization timeout'));
-          }
-        }, 10000);
+
+        timeoutId = setTimeout(() => {
+          fail(new Error(
+            'The Stockfish engine did not finish loading in time. ' +
+            'It is a large (~95 MB) download; reload the page on a faster connection.'
+          ));
+        }, StockfishEngineService.INIT_TIMEOUT_MS);
       } catch (error) {
-        this.status$.next('error');
-        reject(error);
+        fail(error);
       }
     });
+
+    return this.initPromise;
   }
 
   private handleMessage(data: string) {
@@ -228,6 +269,7 @@ export class StockfishEngineService {
       this.send('quit');
       this.worker.terminate();
       this.worker = null;
+      this.initPromise = null;
       this.ready = false;
       this.status$.next('uninitialized');
     }

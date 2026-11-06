@@ -12,6 +12,12 @@ export interface AppConfig {
     enablePuzzles: boolean;
     enableOpenings: boolean;
     enableLearning: boolean;
+    /**
+     * Stream every move to the analysis service while a game is being played.
+     * This needs Kafka. When false, the app skips the live stream and analyses
+     * the finished PGN in one batch instead.
+     */
+    enableLiveAnalysis: boolean;
   };
   /**
    * Hosted no-login demo. When enabled, the app uses a synthetic per-browser
