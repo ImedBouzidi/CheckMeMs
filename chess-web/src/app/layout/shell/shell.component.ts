@@ -240,6 +240,13 @@ import { ThemeService } from '../../core/services/theme.service';
           <span>{{ authService.demoMode ? language.t('nav.demoNotice') : language.t('nav.footer') }}</span>
           <mat-icon aria-hidden="true">{{ authService.demoMode ? 'science' : 'auto_awesome' }}</mat-icon>
         </div>
+
+        <div class="dev-footer">
+          <span class="dev-line">{{ language.t('nav.devBy') }} <strong>{{ language.t('nav.devName') }}</strong></span>
+          <span class="dev-line">{{ language.t('nav.copyright') }} 2026 CheckMeMS</span>
+          <a class="dev-link" href="mailto:bouzidy.imed&#64;gmail.com">bouzidy.imed&#64;gmail.com</a>
+          <span class="dev-line">📞 29071349</span>
+        </div>
       </mat-sidenav>
 
       <mat-sidenav-content class="app-content">
@@ -758,6 +765,48 @@ import { ThemeService } from '../../core/services/theme.service';
       height: 16px;
       color: #cbd5e1;
       font-size: 16px;
+    }
+
+    .dev-footer {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px 22px 20px;
+      border-top: 1px solid rgba(226, 232, 240, 0.9);
+      color: #64748b;
+      font-size: 0.68rem;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    :host-context(html.dark-theme) .dev-footer {
+      border-top-color: rgba(226, 232, 240, 0.15);
+      color: #94a3b8;
+    }
+
+    .dev-line {
+      display: block;
+    }
+
+    .dev-link {
+      color: inherit;
+      text-decoration: underline;
+      text-decoration-color: rgba(100, 116, 139, 0.4);
+      text-underline-offset: 2px;
+      transition: color 0.18s ease, text-decoration-color 0.18s ease;
+    }
+
+    .dev-link:hover {
+      color: #2563eb;
+      text-decoration-color: #2563eb;
+    }
+
+    :host-context(html.dark-theme) .dev-link {
+      color: #94a3b8;
+    }
+
+    :host-context(html.dark-theme) .dev-link:hover {
+      color: #60a5fa;
     }
 
     .app-content {

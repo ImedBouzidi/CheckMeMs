@@ -154,6 +154,13 @@ import { KidsLanguageService } from './kids-language.service';
         <a routerLink="/">{{ ui.common.backToNormalHome }}</a>
       </footer>
 
+      <div class="kids-dev-footer">
+        <span class="kids-dev-line">Developed by <strong>Bouzidi Imed</strong></span>
+        <span class="kids-dev-line">© 2026 CheckMeMS — All rights reserved</span>
+        <a class="kids-dev-link" href="mailto:bouzidy.imed&#64;gmail.com">bouzidy.imed&#64;gmail.com</a>
+        <span class="kids-dev-line">📞 29071349</span>
+      </div>
+
       <!-- Piece popup -->
       <app-kids-piece-popup [piece]="selectedPiece" (closed)="closePiece()" />
     </div>
@@ -859,6 +866,38 @@ import { KidsLanguageService } from './kids-language.service';
     .kids-footer a:hover {
       text-decoration: underline;
       filter: drop-shadow(0 0 6px rgba(245, 196, 94, 0.5));
+    }
+
+    /* ---- Developer Footer ---- */
+    .kids-dev-footer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 18px 24px 30px;
+      border-top: 1px solid rgba(183, 138, 255, 0.25);
+      color: #b78aff;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .kids-dev-line {
+      display: block;
+    }
+
+    .kids-dev-link {
+      color: #f5c45e;
+      text-decoration: underline;
+      text-decoration-color: rgba(245, 196, 94, 0.4);
+      text-underline-offset: 2px;
+      transition: color 0.18s ease, text-decoration-color 0.18s ease;
+    }
+
+    .kids-dev-link:hover {
+      color: #fff;
+      text-decoration-color: #fff;
     }
 
     /* ---- Responsive ---- */
