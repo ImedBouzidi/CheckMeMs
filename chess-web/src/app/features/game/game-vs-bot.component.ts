@@ -1665,10 +1665,32 @@ export interface MoveRecord {
       .header-banner {
         flex-direction: column;
         align-items: flex-start;
+        gap: 8px;
+      }
+      .header-left {
+        width: 100%;
       }
       .header-actions {
         width: 100%;
         justify-content: space-between;
+      }
+      .title-meta {
+        width: 100%;
+      }
+      .sub-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        width: 100%;
+      }
+      .sub-meta > span {
+        width: auto;
+      }
+      .clock-chip {
+        min-width: 70px;
+        font-size: 0.9rem;
+        padding: 3px 8px;
+        margin-top: 6px;
       }
       .board-toolbar {
         flex-direction: column;

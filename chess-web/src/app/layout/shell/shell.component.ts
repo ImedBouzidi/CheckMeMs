@@ -240,19 +240,20 @@ import { ThemeService } from '../../core/services/theme.service';
           <span>{{ authService.demoMode ? language.t('nav.demoNotice') : language.t('nav.footer') }}</span>
           <mat-icon aria-hidden="true">{{ authService.demoMode ? 'science' : 'auto_awesome' }}</mat-icon>
         </div>
-
-        <div class="dev-footer">
-          <span class="dev-line">{{ language.t('nav.devBy') }} <strong>{{ language.t('nav.devName') }}</strong></span>
-          <span class="dev-line">{{ language.t('nav.copyright') }} 2026 CheckMeMS</span>
-          <a class="dev-link" href="mailto:bouzidy.imed&#64;gmail.com">bouzidy.imed&#64;gmail.com</a>
-          <span class="dev-line">📞 29071349</span>
-        </div>
       </mat-sidenav>
 
       <mat-sidenav-content class="app-content">
         <main class="content-inner">
           <router-outlet></router-outlet>
         </main>
+
+        <!-- Full-page developer footer -->
+        <footer class="page-dev-footer">
+          <span class="dev-line">{{ language.t('nav.devBy') }} <strong>{{ language.t('nav.devName') }}</strong></span>
+          <span class="dev-line">{{ language.t('nav.copyright') }} 2026 CheckMeMS</span>
+          <a class="dev-link" href="mailto:bouzidy.imed&#64;gmail.com">bouzidy.imed&#64;gmail.com</a>
+          <span class="dev-line">📞 29071349</span>
+        </footer>
       </mat-sidenav-content>
     </mat-sidenav-container>
   `,
@@ -767,28 +768,32 @@ import { ThemeService } from '../../core/services/theme.service';
       font-size: 16px;
     }
 
-    .dev-footer {
+    .page-dev-footer {
       display: flex;
       flex-direction: column;
+      align-items: center;
       gap: 4px;
-      padding: 12px 22px 20px;
+      padding: 16px 20px 24px;
       border-top: 1px solid rgba(226, 232, 240, 0.9);
       color: #64748b;
       font-size: 0.68rem;
       font-weight: 600;
       line-height: 1.4;
+      text-align: center;
+      width: 100%;
+      box-sizing: border-box;
     }
 
-    :host-context(html.dark-theme) .dev-footer {
+    :host-context(html.dark-theme) .page-dev-footer {
       border-top-color: rgba(226, 232, 240, 0.15);
       color: #94a3b8;
     }
 
-    .dev-line {
+    .page-dev-footer .dev-line {
       display: block;
     }
 
-    .dev-link {
+    .page-dev-footer .dev-link {
       color: inherit;
       text-decoration: underline;
       text-decoration-color: rgba(100, 116, 139, 0.4);
@@ -796,16 +801,16 @@ import { ThemeService } from '../../core/services/theme.service';
       transition: color 0.18s ease, text-decoration-color 0.18s ease;
     }
 
-    .dev-link:hover {
+    .page-dev-footer .dev-link:hover {
       color: #2563eb;
       text-decoration-color: #2563eb;
     }
 
-    :host-context(html.dark-theme) .dev-link {
+    :host-context(html.dark-theme) .page-dev-footer .dev-link {
       color: #94a3b8;
     }
 
-    :host-context(html.dark-theme) .dev-link:hover {
+    :host-context(html.dark-theme) .page-dev-footer .dev-link:hover {
       color: #60a5fa;
     }
 
@@ -815,7 +820,8 @@ import { ThemeService } from '../../core/services/theme.service';
 
     .content-inner {
       min-height: 100%;
-      padding: 30px clamp(18px, 3vw, 38px) 46px;
+      padding: 30px clamp(18px, 3vw, 38px) 46px 80px;
+      box-sizing: border-box;
     }
 
     :host-context(html:not(.dark-theme)) .app-toolbar {
@@ -914,6 +920,14 @@ import { ThemeService } from '../../core/services/theme.service';
       }
 
       .app-toolbar {
+        padding: 0 8px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+      }
+
+      .kids-mode-button {
+        min-height: 36px;
+        margin-inline-end: 6px;
         padding: 0 8px;
       }
 
