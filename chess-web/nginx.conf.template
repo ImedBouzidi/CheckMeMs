@@ -5,6 +5,14 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # Resolve API_UPSTREAM at request time instead of at startup, so the web
+    # container still starts if the gateway DNS name is temporarily unavailable.
+    # DNS_RESOLVER is exported by docker-entrypoint-wrapper.sh from
+    # /etc/resolv.conf (Docker's 127.0.0.11 in Compose, the platform resolver
+    # on Render and similar hosts).
+    resolver ${DNS_RESOLVER} valid=10s ipv6=off;
+    set $api_upstream ${API_UPSTREAM};
+
     gzip on;
     gzip_types text/plain text/css application/javascript application/json image/svg+xml;
     gzip_min_length 1024;
@@ -15,11 +23,21 @@ server {
     }
 
     # Same-origin API for the hosted demo: the browser calls /api, nginx forwards
-    # to the gateway inside the Compose network. No CORS or hardcoded host needed.
+    # to the gateway. No CORS or hardcoded host needed.
+    #
+    # API_UPSTREAM is substituted by the nginx image entrypoint from
+    # /etc/nginx/templates/default.conf.template. The default targets the
+    # Compose network; a standalone deployment (e.g. Render) sets it to the
+    # gateway's public or private origin, such as https://checkmems-gateway.onrender.com.
+    # It must be an origin only (no /api suffix); a trailing slash is stripped
+    # by docker-entrypoint-wrapper.sh.
     location /api/ {
-        proxy_pass http://gateway:8081;
+        proxy_pass $api_upstream;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
+        proxy_ssl_server_name on;
+        # The upstream is addressed by its own hostname, not the web app's.
+        proxy_set_header Host $proxy_host;
+        proxy_set_header X-Forwarded-Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
